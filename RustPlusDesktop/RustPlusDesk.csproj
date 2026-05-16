@@ -19,7 +19,7 @@
 
 	<PropertyGroup>
 		<!-- Produkt-/Paketversion (für Vergleich & Anzeige) -->
-		<Version>5.0.5</Version>
+		<Version>5.0.6</Version>
 		<Title>Rust+ Desk - Panda Edition</Title>
 		<Authors>Panda</Authors>
 		<Company>Panda</Company>
@@ -27,9 +27,9 @@
 		<PackageProjectUrl>https://github.com/LazyPandax/rust-</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/LazyPandax/rust-.git</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
-		<AssemblyVersion>5.0.5</AssemblyVersion>
-		<FileVersion>5.0.5</FileVersion>
-		<InformationalVersion>5.0.5</InformationalVersion>
+		<AssemblyVersion>5.0.6</AssemblyVersion>
+		<FileVersion>5.0.6</FileVersion>
+		<InformationalVersion>5.0.6</InformationalVersion>
 		<IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
 		
 		<!-- (optional, hübsch im Datei-Eigenschaften-Dialog) -->

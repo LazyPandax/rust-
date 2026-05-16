@@ -76,7 +76,7 @@
                         Padding="10,6"
                         VerticalAlignment="Top">
                     <TextBlock x:Name="TxtCurrentVersion"
-                               Text="Current: v5.0.5"
+                               Text="Current: v5.0.6"
                                Foreground="#A9D9FF"
                                FontWeight="SemiBold"
                                FontSize="12"/>
@@ -87,7 +87,7 @@
                 <StackPanel>
                     <Border Style="{StaticResource ReleaseCard}">
                         <StackPanel>
-                            <TextBlock Text="v5.0.5 | Polish, private updates, and support links"
+                            <TextBlock Text="v5.0.6 | Update, Steam unlink, and overlay sync fixes"
                                        Style="{StaticResource ReleaseTitle}"/>
 
                             <UniformGrid Columns="2" Margin="0,0,0,4">
