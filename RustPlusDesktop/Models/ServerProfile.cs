@@ -195,6 +195,18 @@ public class ServerProfile : INotifyPropertyChanged
         set { _cmdOilRig = ValidateCommand(value, "oilrig"); OnProp(); }
     }
 
+    private ObservableCollection<ChatCommandMapping> _builtInCommandMappings = new();
+    public ObservableCollection<ChatCommandMapping> BuiltInCommandMappings
+    {
+        get => _builtInCommandMappings;
+        set
+        {
+            _builtInCommandMappings = value ?? new();
+            EnsureBuiltInChatCommands();
+            OnProp();
+        }
+    }
+
     private ObservableCollection<ChatCommandMapping> _switchCommandMappings = new();
     public ObservableCollection<ChatCommandMapping> SwitchCommandMappings
     {
@@ -221,6 +233,108 @@ public class ServerProfile : INotifyPropertyChanged
         return trimmed;
     }
 
+    private static readonly (string Key, string Label, string DefaultCommand)[] BuiltInCommandDefinitions =
+    {
+        ("pop", "Population", "pop"),
+        ("time", "Time", "time"),
+        ("leader", "Leader", "leader"),
+        ("deepsea", "Deep Sea", "deepsea"),
+        ("cargo", "Cargo Ship", "cargo"),
+        ("small", "Small Oil Rig", "small"),
+        ("large", "Large Oil Rig", "large"),
+        ("heli", "Patrol Heli", "heli"),
+        ("chinook", "Chinook", "chinook"),
+        ("vendor", "Travelling Vendor", "vendor"),
+        ("events", "Events", "events"),
+        ("connections", "Connections", "connections"),
+        ("deaths", "Deaths", "deaths"),
+        ("team", "Team", "team"),
+        ("online", "Online", "online"),
+        ("offline", "Offline", "offline"),
+        ("afk", "AFK", "afk"),
+        ("alive", "Alive", "alive"),
+        ("steamid", "Steam ID", "steamid"),
+        ("prox", "Proximity", "prox"),
+        ("players", "Players", "players"),
+        ("craft", "Craft", "craft"),
+        ("recycle", "Recycle", "recycle"),
+        ("research", "Research", "research"),
+        ("decay", "Decay", "decay"),
+        ("market", "Market", "market"),
+        ("marker", "Marker", "marker"),
+        ("notes", "Notes", "notes"),
+        ("timer", "Timer", "timer"),
+        ("upkeep", "All TC Upkeep", "upkeep"),
+        ("uptime", "Uptime", "uptime"),
+        ("wipe", "Wipe", "wipe"),
+        ("mute", "Mute", "mute"),
+        ("unmute", "Unmute", "unmute"),
+        ("send", "Send Discord DM", "send"),
+        ("tts", "Discord TTS", "tts"),
+        ("tr", "Translate To", "tr"),
+        ("trf", "Translate From", "trf")
+    };
+
+    public static IReadOnlyList<(string Key, string Label, string DefaultCommand)> BuiltInChatCommandDefinitions
+        => BuiltInCommandDefinitions;
+
+    public void EnsureBuiltInChatCommands()
+    {
+        string LegacyFor(string key, string fallback) => key switch
+        {
+            "pop" => ValidateCommand(CmdPop, fallback),
+            "time" => ValidateCommand(CmdTime, fallback),
+            "leader" => string.Equals(CmdPromote, "promote", StringComparison.OrdinalIgnoreCase)
+                ? fallback
+                : ValidateCommand(CmdPromote, fallback),
+            "deepsea" => ValidateCommand(CmdDeepSea, fallback),
+            "cargo" => ValidateCommand(CmdCargo, fallback),
+            _ => fallback
+        };
+
+        foreach (var (key, label, defaultCommand) in BuiltInCommandDefinitions)
+        {
+            var existing = BuiltInCommandMappings.FirstOrDefault(m =>
+                string.Equals(m.Key, key, StringComparison.OrdinalIgnoreCase));
+
+            if (existing == null)
+            {
+                BuiltInCommandMappings.Add(new ChatCommandMapping
+                {
+                    Key = key,
+                    Label = label,
+                    Command = LegacyFor(key, defaultCommand)
+                });
+            }
+            else
+            {
+                existing.Key = key;
+                if (string.IsNullOrWhiteSpace(existing.Label)) existing.Label = label;
+                if (string.IsNullOrWhiteSpace(existing.Command)) existing.Command = defaultCommand;
+            }
+        }
+
+        for (int i = BuiltInCommandMappings.Count - 1; i >= 0; i--)
+        {
+            var map = BuiltInCommandMappings[i];
+            if (string.IsNullOrWhiteSpace(map.Key) ||
+                !BuiltInCommandDefinitions.Any(d => string.Equals(d.Key, map.Key, StringComparison.OrdinalIgnoreCase)))
+            {
+                BuiltInCommandMappings.RemoveAt(i);
+            }
+        }
+    }
+
+    public string GetBuiltInChatCommand(string key)
+    {
+        EnsureBuiltInChatCommands();
+        var mapping = BuiltInCommandMappings.FirstOrDefault(m =>
+            string.Equals(m.Key, key, StringComparison.OrdinalIgnoreCase));
+        var fallback = BuiltInCommandDefinitions.FirstOrDefault(d =>
+            string.Equals(d.Key, key, StringComparison.OrdinalIgnoreCase)).DefaultCommand;
+        return ValidateCommand(mapping?.Command, string.IsNullOrWhiteSpace(fallback) ? key : fallback);
+    }
+
     [JsonIgnore]
     public string CmdSwitch1 { get => SwitchCommandMappings.Count > 0 ? SwitchCommandMappings[0].Command : "switch1"; set { if (SwitchCommandMappings.Count > 0) SwitchCommandMappings[0].Command = ValidateCommand(value, "switch1"); } }
     [JsonIgnore]
@@ -237,6 +351,8 @@ public class ServerProfile : INotifyPropertyChanged
 
     public void SyncChatCommands()
     {
+        EnsureBuiltInChatCommands();
+
         // Sync Switches
         var switches = AllDevices.Where(d => d.Kind == "SmartSwitch").ToList();
         while (SwitchCommandMappings.Count < switches.Count)
@@ -277,6 +393,7 @@ public class ServerProfile : INotifyPropertyChanged
                 UpkeepCommandMappings[i].EntityId = tcs[i].EntityId;
         }
         
+        OnProp(nameof(BuiltInCommandMappings));
         OnProp(nameof(SwitchCommandMappings));
         OnProp(nameof(UpkeepCommandMappings));
     }
@@ -284,6 +401,9 @@ public class ServerProfile : INotifyPropertyChanged
 
 public class ChatCommandMapping : INotifyPropertyChanged
 {
+    private string _key = "";
+    public string Key { get => _key; set { _key = value ?? ""; OnProp(); } }
+
     private string _label = "";
     public string Label { get => _label; set { _label = value; OnProp(); } }
 

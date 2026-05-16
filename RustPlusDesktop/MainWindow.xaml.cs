@@ -536,15 +536,18 @@ public partial class MainWindow : ui.FluentWindow
 
         _monumentWatcher.OnOilRigTriggered += (s, data) =>
         {
-            if (!TrackingService.AnnounceSpawnsMaster || !TrackingService.AnnounceOilRig) return;
             string timeStr = data.Duration >= 800 ? "~15m" : "~12:30m";
+            string msg = $"[{data.Name}] triggered! Crate unlocks in {timeStr}.";
+            RecordChatCommandEvent(data.Name.Contains("Large", StringComparison.OrdinalIgnoreCase) ? "large" : "small", msg);
+            if (!TrackingService.AnnounceSpawnsMaster || !TrackingService.AnnounceOilRig) return;
             Dispatcher.InvokeAsync(async () =>
-                await SendTeamChatSafeAsync($"[{data.Name}] triggered! Crate unlocks in {timeStr}."));
+                await SendTeamChatSafeAsync(msg));
         };
 
         // NEU: Update Events (10m / 5m Warnungen)
         _monumentWatcher.OnOilRigChatUpdate += (s, message) =>
         {
+            RecordChatCommandEvent(message.Contains("Large", StringComparison.OrdinalIgnoreCase) ? "large" : "small", message);
             if (!TrackingService.AnnounceSpawnsMaster || !TrackingService.AnnounceOilRig) return;
             Dispatcher.InvokeAsync(async () => await SendTeamChatSafeAsync(message));
         };
@@ -4012,6 +4015,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
     private const string RepoOwner = "LazyPandax";
     private const string RepoName = "rust-";
     private const string InstallerAssetName = "RustPlusDesk-Setup.exe";
+    private string? _lastReleaseCheckFailureMessage;
 
     // aktuelle App-Version ermitteln (fallback auf 0.0.0 wenn nicht gesetzt)
     private static Version GetCurrentVersion()
@@ -4055,26 +4059,26 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
     private sealed record GitHubRelease(string TagName, string? Name, string? Body, List<GitHubAsset> Assets);
     private sealed record GitHubAsset(string Name, string BrowserDownloadUrl, string? Digest);
 
-    private async Task<(Version latest, string tag, string? downloadUrl, string? sha256Digest)?> GetLatestReleaseAsync()
+    private async Task<(Version latest, string tag, string? downloadUrl, string? sha256Digest)?> GetLatestReleaseAsync(bool reportErrors = true)
     {
+        _lastReleaseCheckFailureMessage = null;
+
         using var http = new HttpClient();
         http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RustPlusDesk", GetCurrentVersion().ToString()));
         http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         http.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
 
-        var token = Environment.GetEnvironmentVariable("RUSTPLUSDESK_GITHUB_TOKEN")
-                    ?? Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+        var token = GitHubTokenStore.ReadToken();
         if (!string.IsNullOrWhiteSpace(token))
-            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Trim());
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var url = $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest";
         using var resp = await http.GetAsync(url);
         if (!resp.IsSuccessStatusCode)
         {
-            if (resp.StatusCode == HttpStatusCode.NotFound)
-                AppendLog("Release check unavailable: GitHub returned 404. The repository is private or the app has no GitHub token.");
-            else
-                AppendLog($"GitHub release check failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+            var message = BuildReleaseCheckError(resp.StatusCode, resp.ReasonPhrase, !string.IsNullOrWhiteSpace(token));
+            _lastReleaseCheckFailureMessage = message;
+            if (reportErrors) AppendLog(message);
             return null;
         }
 
@@ -4106,6 +4110,23 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
             return null;
         }
         return (latest, tag, dl, sha256Digest);
+    }
+
+    private static string BuildReleaseCheckError(HttpStatusCode statusCode, string? reasonPhrase, bool hasToken)
+    {
+        return statusCode switch
+        {
+            HttpStatusCode.NotFound when !hasToken =>
+                $"Release check skipped: {RepoOwner}/{RepoName} is private. Add a GitHub token at {GitHubTokenStore.PlainImportPath} or set RUSTPLUSDESK_GITHUB_TOKEN.",
+            HttpStatusCode.NotFound =>
+                $"Release check unavailable: GitHub returned 404 for {RepoOwner}/{RepoName}. Check that the token can access the repo and that the repo name is correct.",
+            HttpStatusCode.Unauthorized =>
+                "Release check unavailable: GitHub rejected the configured token. Replace it with a valid token that can read releases.",
+            HttpStatusCode.Forbidden =>
+                "Release check unavailable: GitHub returned 403. The token may be missing repo access, or the API rate limit may be exhausted.",
+            _ =>
+                $"GitHub release check failed: {(int)statusCode} {reasonPhrase}"
+        };
     }
 
     private static string? NormalizeReleaseDigest(string? digest)
@@ -4336,7 +4357,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
     }
     private void BtnDiscord_Click(object sender, RoutedEventArgs e)
     {
-        try { Process.Start(new ProcessStartInfo("https://discord.gg/v4X584wye4") { UseShellExecute = true }); }
+        try { Process.Start(new ProcessStartInfo("https://discord.gg/G5TVPsqXQq") { UseShellExecute = true }); }
         catch { }
     }
 
@@ -4344,7 +4365,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
     {
         try
         {
-            var latestInfo = await GetLatestReleaseAsync();
+            var latestInfo = await GetLatestReleaseAsync(reportErrors: false);
             if (latestInfo is null) return;
 
             var (latest, tag, _, _) = latestInfo.Value;
@@ -4387,7 +4408,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
             {
                 // _vm.IsBusy = false; _vm.BusyText = "";
                 System.Windows.MessageBox.Show(
-                    "Could not query latest release. Please try again or open Releases page.",
+                    _lastReleaseCheckFailureMessage ?? "Could not query latest release. Please try again or open Releases page.",
                     "Update", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }

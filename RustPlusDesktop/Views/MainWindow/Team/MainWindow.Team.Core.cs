@@ -210,6 +210,7 @@ public partial class MainWindow
 
                 var now = (m.Online, m.Dead);
                 _lastPresence[sid] = now;
+                TrackTeamCommandSnapshot(vm, hadPrev, prev);
 
                 if (sid == _mySteamId)
                 {
@@ -242,16 +243,18 @@ public partial class MainWindow
     {
         try
         {
-            if (prev.online != now.online && _announceSpawns)
+            if (prev.online != now.online)
             {
-                bool isSelf = vm.SteamId == _mySteamId;
-                bool shouldAnnounce = now.online ? TrackingService.AnnouncePlayerOnline : TrackingService.AnnouncePlayerOffline;
+                var where = (vm.X.HasValue && vm.Y.HasValue) ? GetGridLabel(vm.X.Value, vm.Y.Value) : "unknown";
+                var txt = now.online ? $"{vm.Name} came online @ {where}" : $"{vm.Name} went offline";
+                RecordChatCommandEvent("connection", txt);
 
-                if (shouldAnnounce)
+                if (_announceSpawns)
                 {
-                    var where = (vm.X.HasValue && vm.Y.HasValue) ? GetGridLabel(vm.X.Value, vm.Y.Value) : "unknown";
-                    var txt = now.online ? $"{vm.Name} came online @ {where}" : $"{vm.Name} went offline";
-                    await SendTeamChatSafeAsync(txt);
+                    bool shouldAnnounce = now.online ? TrackingService.AnnouncePlayerOnline : TrackingService.AnnouncePlayerOffline;
+
+                    if (shouldAnnounce)
+                        await SendTeamChatSafeAsync(txt);
                 }
             }
 
@@ -263,6 +266,10 @@ public partial class MainWindow
                     px = dx;
                     py = dy;
                 }
+
+                var eventWhere = (px.HasValue && py.HasValue) ? GetGridLabel(px.Value, py.Value) : "unknown";
+                var eventText = now.dead ? $"{vm.Name} died @ {eventWhere}" : $"{vm.Name} respawned @ {eventWhere}";
+                RecordChatCommandEvent(now.dead ? "death" : "respawn", eventText);
 
                 if (_announceSpawns)
                 {
@@ -277,9 +284,7 @@ public partial class MainWindow
 
                     if (shouldAnnounce)
                     {
-                        var where = (px.HasValue && py.HasValue) ? GetGridLabel(px.Value, py.Value) : "unknown";
-                        var txt = now.dead ? $"{vm.Name} died @ {where}" : $"{vm.Name} respawned @ {where}";
-                        await SendTeamChatSafeAsync(txt);
+                        await SendTeamChatSafeAsync(eventText);
                     }
                 }
 
@@ -390,16 +395,7 @@ public partial class MainWindow
         _vm.FollowingPlayerAvatar = member?.Avatar;
 
         AppendLog($"Following {name} on map.");
-        
-        // Immediate center
-        if (TryResolvePosFromDynMarkers(steamId, out var x, out var y))
-        {
-            CenterMapOnWorld(x, y, true);
-        }
-        else if (TeamMembers.FirstOrDefault(t => t.SteamId == steamId) is { X: { } tx, Y: { } ty })
-        {
-            CenterMapOnWorld(tx, ty, true);
-        }
+        CenterFollowTargetNow();
     }
 
     private void Team_OpenProfile_Click(object sender, RoutedEventArgs e)

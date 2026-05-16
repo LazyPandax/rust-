@@ -127,6 +127,7 @@ public partial class MainWindow
             await _rust.ConnectAsync(profile);
             profile.IsConnected = true;
             profile.IsFullConnected = false;
+            MarkChatCommandServerConnected();
 
             if (_rust is RustPlusClientReal real)
             {
@@ -236,6 +237,7 @@ public partial class MainWindow
             await _rust.ConnectAsync(_vm.Selected);
             AppendLog("Connected.");
             _connectedProfile = _vm.Selected;
+            MarkChatCommandServerConnected();
 
             TrackingService.StartPolling(_vm.Selected.Host ?? "", _vm.Selected.Port, _vm.Selected.Name ?? "");
 
@@ -364,6 +366,7 @@ public partial class MainWindow
         {
             await _rust.ConnectAsync(_vm.Selected, cts.Token);
             _vm.Selected.IsConnected = true;
+            MarkChatCommandServerConnected();
             AppendLog("Connected.");
             return true;
         }

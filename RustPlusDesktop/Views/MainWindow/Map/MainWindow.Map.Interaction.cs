@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -381,6 +382,72 @@ public partial class MainWindow
         MapTransform.Matrix = m;
         RefreshAllOverlayScales();
         RefreshMonumentOverlayPositions();
+    }
+
+    private bool TryGetMapFollowTargetWorldPos(out double x, out double y)
+    {
+        x = y = 0;
+
+        if (_trackingEntityId.HasValue)
+        {
+            var tracked = _lastMarkers?.FirstOrDefault(m => m.Id == _trackingEntityId.Value);
+            if (tracked.HasValue && tracked.Value.Id != 0)
+            {
+                x = tracked.Value.X;
+                y = tracked.Value.Y;
+                return true;
+            }
+
+            if (_dynStates.TryGetValue(_trackingEntityId.Value, out var state) && state.History.Count > 0)
+            {
+                x = state.LastRealX;
+                y = state.LastRealY;
+                return true;
+            }
+        }
+
+        if (_vm.IsFollowing && _vm.FollowingSteamId.HasValue)
+        {
+            var sid = _vm.FollowingSteamId.Value;
+            if (TryResolvePosFromDynMarkers(sid, out x, out y))
+                return true;
+
+            var member = TeamMembers.FirstOrDefault(t => t.SteamId == sid);
+            if (member != null && member.X.HasValue && member.Y.HasValue)
+            {
+                x = member.X.Value;
+                y = member.Y.Value;
+                return true;
+            }
+        }
+
+        return TryGetMyWorldPos(out x, out y);
+    }
+
+    private void CenterFollowTargetNow()
+    {
+        if (!TryGetMapFollowTargetWorldPos(out var x, out var y))
+        {
+            AppendLog("No map target position available yet.");
+            return;
+        }
+
+        if (_vm.IsFollowing || _trackingEntityId.HasValue)
+        {
+            _currentCamX = x;
+            _currentCamY = y;
+            _camTargetX = x;
+            _camTargetY = y;
+            _isSmoothingFollow = true;
+        }
+
+        CenterMapOnWorldInstant(x, y);
+        CenterMiniMapOnPlayer();
+    }
+
+    private void BtnCenterFollow_Click(object sender, RoutedEventArgs e)
+    {
+        CenterFollowTargetNow();
     }
  
     private void BtnResetMap_Click(object sender, RoutedEventArgs e)

@@ -64,22 +64,7 @@ internal readonly HashSet<string> _camBusy = new(StringComparer.OrdinalIgnoreCas
 
     private bool TryGetFollowingWorldPos(out double worldX, out double worldY)
     {
-        worldX = 0; worldY = 0;
-        ulong sid = _vm.FollowingSteamId ?? _mySteamId;
-
-        // 1. Check dynamic markers (high priority for movement)
-        if (TryResolvePosFromDynMarkers(sid, out worldX, out worldY)) return true;
-
-        // 2. Check team member state (static/last known)
-        var member = TeamMembers.FirstOrDefault(t => t.SteamId == sid);
-        if (member != null && member.X.HasValue && member.Y.HasValue)
-        {
-            worldX = member.X.Value;
-            worldY = member.Y.Value;
-            return true;
-        }
-
-        return false;
+        return TryGetMapFollowTargetWorldPos(out worldX, out worldY);
     }
 
     public void CenterMiniMapOnPlayer()
@@ -90,7 +75,8 @@ internal readonly HashSet<string> _camBusy = new(StringComparer.OrdinalIgnoreCas
         if (!TryGetFollowingWorldPos(out mapX, out mapY)) return;
 
         Point pHost;
-        if (_isSmoothingFollow)
+        bool keepTargetCentered = _isSmoothingFollow || _vm.IsFollowing || _trackingEntityId.HasValue;
+        if (keepTargetCentered)
         {
             // Während der aktiven Glättung ist das Ziel IMMER exakt in der Mitte des WebViewHost
             pHost = new Point(WebViewHost.ActualWidth * 0.5, WebViewHost.ActualHeight * 0.5);
@@ -120,7 +106,7 @@ internal readonly HashSet<string> _camBusy = new(StringComparer.OrdinalIgnoreCas
         vx = Math.Max(0, Math.Min(vx, hostW - side));
         vy = Math.Max(0, Math.Min(vy, hostH - side));
 
-        _miniMap.SetViewbox(new Rect(vx, vy, side, side), _isSmoothingFollow);
+        _miniMap.SetViewbox(new Rect(vx, vy, side, side), keepTargetCentered);
     }
 
     private MiniMapWindow? _miniMap;
@@ -153,18 +139,7 @@ internal readonly HashSet<string> _camBusy = new(StringComparer.OrdinalIgnoreCas
 
             _miniMap.OnClicked = () =>
             {
-                // Wenn wir jemandem folgen -> auf diesen zentrieren
-                if (_vm.IsFollowing && _vm.FollowingSteamId.HasValue)
-                {
-                    if (TryResolvePosFromDynMarkers(_vm.FollowingSteamId.Value, out var fx, out var fy))
-                        CenterMapOnWorldInstant(fx, fy);
-                }
-                else
-                {
-                    // Ansonsten auf mich selbst
-                    if (TryGetMyWorldPos(out var mx, out var my))
-                        CenterMapOnWorldInstant(mx, my);
-                }
+                CenterFollowTargetNow();
             };
 
             _miniMap.Closed += (s, ev) =>

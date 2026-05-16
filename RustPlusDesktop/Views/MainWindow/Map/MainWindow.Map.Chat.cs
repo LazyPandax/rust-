@@ -89,6 +89,12 @@ public partial class MainWindow
     private async Task SendTeamChatSafeAsync(string text)
     {
         // Thread-safe wrapper für Hintergrund-Alerts
+        if (_chatCommandsMuted)
+        {
+            AppendLog($"[Chat] Suppressed while muted: {text}");
+            return;
+        }
+
         try
         {
             await SendTeamChatReliableAsync(text);

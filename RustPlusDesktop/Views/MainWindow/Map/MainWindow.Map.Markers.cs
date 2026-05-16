@@ -316,15 +316,16 @@ public partial class MainWindow
                 
                 state.SeenAtEdge = distFromCenter > (half * 0.85);
 
+                string grid = GetGridLabel(m.X, m.Y);
+                string locStr = distFromCenter > (half * 1.05) ? $"far out at sea (near {grid})" : grid;
+                string msg = $"Cargo Ship spawned {locStr}";
+                RecordChatCommandEvent("cargo", msg);
+
                 if (_announceSpawns && TrackingService.AnnounceCargo)
-                {
-                    string grid = GetGridLabel(m.X, m.Y);
-                    string locStr = distFromCenter > (half * 1.05) ? $"far out at sea (near {grid})" : grid;
-                    _ = SendTeamChatSafeAsync($"Cargo Ship spawned {locStr}");
-                    
-                    if (state.SeenAtEdge)
-                        AppendLog($"[cargo] Spawn detected at edge (dist: {distFromCenter:F0}, threshold: {half * 0.85:F0})");
-                }
+                    _ = SendTeamChatSafeAsync(msg);
+
+                if (state.SeenAtEdge)
+                    AppendLog($"[cargo] Spawn detected at edge (dist: {distFromCenter:F0}, threshold: {half * 0.85:F0})");
             }
 
             _cargoDockStates[m.Id] = state;
@@ -418,7 +419,9 @@ public partial class MainWindow
             if ((DateTime.UtcNow - state.DockTime.Value).TotalSeconds >= 5)
             {
                 string grid = GetGridLabel(m.X, m.Y);
-                _ = SendTeamChatSafeAsync($"Cargo Ship docked at {state.HarborName} ({grid})");
+                string msg = $"Cargo Ship docked at {state.HarborName} ({grid})";
+                RecordChatCommandEvent("cargo", msg);
+                _ = SendTeamChatSafeAsync(msg);
                 state.AnnouncedDock = true;
             }
         }
@@ -441,7 +444,9 @@ public partial class MainWindow
                         if (dToH < dLastToH) // Approaching
                         {
                             string grid = GetGridLabel(h.X, h.Y);
-                            _ = SendTeamChatSafeAsync($"Cargo Ship expected to dock at {Beautify(h.Name!)} ({grid}) in approx. 5 minutes.");
+                            string msg = $"Cargo Ship expected to dock at {Beautify(h.Name!)} ({grid}) in approx. 5 minutes.";
+                            RecordChatCommandEvent("cargo", msg);
+                            _ = SendTeamChatSafeAsync(msg);
                             state.AnnouncedArrivalWarning = true;
                             state.ArrivalWarnedAt = DateTime.UtcNow; // Record for accuracy validation
                             break;
@@ -467,7 +472,9 @@ public partial class MainWindow
                 else
                 {
                     string grid = GetGridLabel(m.X, m.Y);
-                    _ = SendTeamChatSafeAsync($"Cargo Ship departing from {state.HarborName} in 5 minutes ({grid})");
+                    string msg = $"Cargo Ship departing from {state.HarborName} in 5 minutes ({grid})";
+                    RecordChatCommandEvent("cargo", msg);
+                    _ = SendTeamChatSafeAsync(msg);
                     state.AnnouncedEgressWarning = true;
                 }
             }
@@ -498,6 +505,7 @@ public partial class MainWindow
             if ((now - state.LastSeen).TotalSeconds > 60)
             {
                 _cargoLastDespawnUtc = now;
+                RecordChatCommandEvent("cargo", "Cargo Ship despawned from the map");
                 AppendLog($"[cargo] Despawn detected – last seen {(now - state.LastSeen).TotalSeconds:F0}s ago.");
 
                 if (state.FirstSeen.HasValue && state.HarborCount >= 1 && state.SeenAtEdge) 
@@ -1200,11 +1208,15 @@ public partial class MainWindow
                             _ => true 
                         };
 
-                        if (_announceSpawns && shouldAnnounce && _firstMarkerPollDone && !_firstPollDyn)
+                        bool shouldRecordEvent = m.Type == 8 || m.Type == 4 || m.Type == 6;
+                        if ((shouldRecordEvent || (_announceSpawns && shouldAnnounce)) && _firstMarkerPollDone && !_firstPollDyn)
                         {
                             var grid = GetGridLabel(m.X, m.Y);
                             var kind = EventKindText(m.Type);
-                            _ = SendTeamChatSafeAsync($"{kind} spawned in at {grid}");
+                            var msg = $"{kind} spawned in at {grid}";
+                            RecordChatCommandEvent(NormalizeEventKind(kind), msg);
+                            if (_announceSpawns && shouldAnnounce)
+                                _ = SendTeamChatSafeAsync(msg);
                         }
                     }
 
@@ -1449,14 +1461,22 @@ public partial class MainWindow
                         var site = new HeliCrashSite { HeliId = id, X = cx, Y = cy, CrashedAt = DateTime.UtcNow };
                         _heliCrashSites.Add(site);
                         _ = Dispatcher.InvokeAsync(() => site.MapElement = PlaceHeliCrashSite(site));
+                        RecordChatCommandEvent("heli", $"Patrol Heli shot down at {crashGrid}");
                         if (_announceSpawns && TrackingService.AnnounceHeli)
                             _ = SendTeamChatSafeAsync($"Patrol Heli shot down at {crashGrid}");
                         AppendLog($"[HeliCrash] Crash detected at {crashGrid} (last real pos {cx:F0},{cy:F0})");
                     }
                     else
                     {
+                        RecordChatCommandEvent("heli", "Patrol Heli left the map area");
                         AppendLog($"[Heli] Patrol Heli left the map area.");
                     }
+                }
+                else if (state != null && (state.Type == 4 || state.Type == 6))
+                {
+                    var kind = state.Type == 4 ? "chinook" : "vendor";
+                    var name = state.Type == 4 ? "Chinook 47" : "Travelling Vendor";
+                    RecordChatCommandEvent(kind, $"{name} left the map");
                 }
 
                 Overlay.Children.Remove(oldEl);

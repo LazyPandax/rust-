@@ -1,5 +1,5 @@
 ![Headline](RustPlusDesktop/Assets/Images/headlineGIT.jpg)  
-[![Discord](https://img.shields.io/badge/Discord-Rust²%20|%20Rust%2B%20Desktop-5865f2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/v4X584wye4)
+[![Discord](https://img.shields.io/badge/Discord-Rust²%20|%20Rust%2B%20Desktop-5865f2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/G5TVPsqXQq)
 
 
 [Repository: LazyPandax/rust-](https://github.com/LazyPandax/rust-)
@@ -245,6 +245,8 @@ Enjoy! :)
 1. **Download & install**  
 
    - Get `RustPlusDesk-Setup.exe` from **[Releases](https://github.com/LazyPandax/rust-/releases)** and run it
+
+   - Private fork update checks need GitHub access. Create a fine-grained token with read access to `LazyPandax/rust-`, then either set `RUSTPLUSDESK_GITHUB_TOKEN` or place the token once in `%APPDATA%\RustPlusDesk\github-token.txt`; the app imports it into a DPAPI-protected file and removes the plaintext file.
 
 
 

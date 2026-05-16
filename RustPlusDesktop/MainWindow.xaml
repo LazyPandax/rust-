@@ -3258,6 +3258,14 @@
                                 Click="BtnToggleMiniMap_Click"
                                 Content="Mini &#x1F5FA;"
                                 Style="{StaticResource GhostButton}" />
+                            <Button
+                                x:Name="BtnCenterFollow"
+                                Margin="4,0,0,0"
+                                Click="BtnCenterFollow_Click"
+                                Style="{StaticResource IconButton}"
+                                ToolTip="Center followed player, tracked event, or yourself">
+                                <TextBlock FontSize="16" Text="&#x25CE;" />
+                            </Button>
 
                             <Button
                                 x:Name="BtnCrosshair"

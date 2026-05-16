@@ -7,6 +7,7 @@ namespace RustPlusDesk.Views
         public PatchNotesWindow()
         {
             InitializeComponent();
+            TxtCurrentVersion.Text = $"Current: v{MainWindow.AppInfo.VersionRaw}";
         }
 
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
