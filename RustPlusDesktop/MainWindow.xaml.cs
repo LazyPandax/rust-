@@ -67,6 +67,7 @@ public partial class MainWindow : ui.FluentWindow
     private readonly Dictionary<uint, DateTime> _entityPairSeen = new();
     private string? _lastPairSig;
     private bool _listenerStarting; // Schutz gegen Doppelklicks
+    private bool _shutdownForUpdateInstaller;
     private readonly System.Windows.Threading.DispatcherTimer _statusTimer =
     new() { Interval = TimeSpan.FromSeconds(30) };
 
@@ -257,7 +258,7 @@ public partial class MainWindow : ui.FluentWindow
     private readonly List<(double uPx, double vPx, string? label)> _staticMarkers = new();
     protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
     {
-        if (TrackingService.CloseToTrayEnabled)
+        if (TrackingService.CloseToTrayEnabled && !_shutdownForUpdateInstaller)
         {
             e.Cancel = true;
             this.Hide();
@@ -1966,7 +1967,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
 
     private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        if (TrackingService.CloseToTrayEnabled)
+        if (TrackingService.CloseToTrayEnabled && !_shutdownForUpdateInstaller)
         {
             e.Cancel = true;
             this.Hide();
@@ -4296,6 +4297,43 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
         Process.Start(psi);
     }
 
+    private bool TryStartDownloadedInstaller(string path, out string? error)
+    {
+        error = null;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+            {
+                error = "The downloaded installer file could not be found.";
+                return false;
+            }
+
+            var psi = new ProcessStartInfo
+            {
+                FileName = path,
+                UseShellExecute = true,
+                Verb = "runas",
+                WorkingDirectory = IOPath.GetDirectoryName(path) ?? IOPath.GetTempPath()
+            };
+
+            Process.Start(psi);
+            _shutdownForUpdateInstaller = true;
+            Dispatcher.BeginInvoke(new Action(() => Application.Current.Shutdown()));
+            return true;
+        }
+        catch (Win32Exception ex) when (ex.NativeErrorCode == 1223)
+        {
+            error = "The installer start was cancelled.";
+            return false;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            return false;
+        }
+    }
+
     private async Task<string?> DownloadInstallerAsync(string url, bool useGitHubToken, IProgress<DownloadReport>? progress = null)
     {
         var target = System.IO.Path.Combine(System.IO.Path.GetTempPath(), InstallerAssetName);
@@ -4372,7 +4410,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
         return $"{dblSByte:0.##} {Suffix[i]}";
     }
 
-    private async Task<bool> VerifyAndRevealDownloadedInstallerAsync(string installerPath, string? expectedSha256)
+    private async Task<bool> VerifyAndStartDownloadedInstallerAsync(string installerPath, string? expectedSha256)
     {
         try
         {
@@ -4390,16 +4428,20 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
                 return false;
             }
 
-            RevealDownloadedInstaller(installerPath);
-
             var verificationText = string.IsNullOrWhiteSpace(expectedSha256)
                 ? "GitHub did not provide a SHA256 release digest, so this download was not cryptographically verified."
                 : "SHA256 matches the GitHub release digest.";
 
+            AppendLog("Installer verified. Starting setup...");
+            if (TryStartDownloadedInstaller(installerPath, out var startError))
+                return true;
+
+            AppendLog("Installer was not started: " + startError);
+            RevealDownloadedInstaller(installerPath);
             System.Windows.MessageBox.Show(
-                $"Installer downloaded. It was not started automatically.\n\n{verificationText}\n\nPath: {installerPath}\nSHA256: {actualSha256}",
-                "Update downloaded", MessageBoxButton.OK, MessageBoxImage.Information);
-            return true;
+                $"Installer downloaded and verified, but it was not started.\n\n{verificationText}\n\nReason: {startError}\n\nPath: {installerPath}\nSHA256: {actualSha256}",
+                "Update downloaded", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return false;
         }
         catch (Exception ex)
         {
@@ -4606,7 +4648,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
             }
 
             var ask = System.Windows.MessageBox.Show(
-                $"New version available: {tag}\nDownload installer and verify hash now?\n\nThe installer will not be started automatically.",
+                $"New version available: {tag}\nDownload installer, verify hash, and start setup now?\n\nThe app will close after setup starts.",
                 "Update available", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
             if (ask != MessageBoxResult.Yes)
@@ -4636,7 +4678,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
                 return;
             }
 
-            await VerifyAndRevealDownloadedInstallerAsync(path, sha256Digest);
+            await VerifyAndStartDownloadedInstallerAsync(path, sha256Digest);
         }
         catch (Exception ex)
         {
