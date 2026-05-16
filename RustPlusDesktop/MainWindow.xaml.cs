@@ -4236,6 +4236,16 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
         win.Activate();
     }
 
+    private void BtnRustPlusTools_Click(object sender, RoutedEventArgs e)
+    {
+        var win = new Views.RustPlusToolsWindow
+        {
+            Owner = this
+        };
+        win.Show();
+        win.Activate();
+    }
+
     private void BtnSettings_Click(object sender, RoutedEventArgs e)
     {
         var modal = new SettingsModal { Owner = this };

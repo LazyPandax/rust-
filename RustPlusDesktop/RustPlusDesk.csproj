@@ -226,6 +226,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
+    <Content Include="Assets\Data\RustPlusTools\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
     <Resource Include="Assets\icons\airfield.png" />
     <Resource Include="Assets\icons\arcticresearch.png" />
     <Resource Include="Assets\icons\banditcamp.png" />

@@ -29,8 +29,8 @@ Static review date: 2026-05-16.
 | In-game chat commands | `src\handlers\inGameCommandHandler.js`, `docs\full_list_features.md` | Partial support in `Views\MainWindow\Map\MainWindow.Map.ChatCommands.cs` | Merge later | New command engine should port commands one at a time with tests. |
 | Battlemetrics trackers | `src\structures\Battlemetrics.js`, `src\handlers\battlemetricsHandler.js` | Present in tracking/player views | Keep new | New app already has tracking services and UI. |
 | Market/vending search | `src\commands\market.js`, `src\handlers\vendingMachineHandler.js` | Present as Shop Search / PathFinder | Keep new | New app already provides richer map UI. |
-| Item info / craft / recycle / research / decay / upkeep | `src\commands\item.js`, `craft.js`, `recycle.js`, `research.js`, `decay.js`, `upkeep.js` | Partial item database and shop/path tools | Port old data behavior later | Candidate for a read-only calculator panel. Do not port Node command layer directly. |
-| CCTV codes | `src\commands\cctv.js`, `src\staticFiles\cctv.json` | Camera support present | Merge later | Reuse static CCTV data only if license-compatible and validated. |
+| Item info / craft / recycle / research / decay / upkeep | `src\commands\item.js`, `craft.js`, `recycle.js`, `research.js`, `decay.js`, `upkeep.js` | Rust++ Tools window | Ported | Imported the static Rust++ data into a read-only desktop tools window. The Discord command layer was not ported. |
+| CCTV codes | `src\commands\cctv.js`, `src\staticFiles\cctv.json` | Rust++ Tools window | Ported | Static monument camera code lookup is available without Discord or bot credentials. |
 | Event notifications | `src\structures\MapMarkers.js`, `src\rustplusEvents\message.js` | Present for cargo/heli/chinook/oil/deep sea markers | Keep new | New app has map-centric notifications. |
 | Timers / notes | Old in-game commands and docs | Not a primary new UI feature | Port later | Low risk; good candidate after security fixes. |
 | Translation / TTS / Discord voice | `translate`, `src\commands\voice.js`, `src\discordTools\discordVoice.js` | Not present | Skip | Adds external services, voice dependencies, and Discord permissions. |
@@ -40,6 +40,6 @@ Static review date: 2026-05-16.
 ## Porting Order
 
 1. Security/stability fixes: completed in this branch for pairing logs, Edge login, DPAPI-backed profile/FCM config storage, updater behavior, overlay sync defaults, and scoped process cleanup.
-2. Low-risk calculators: item, craft, recycle, research, decay, upkeep.
-3. Low-risk utility UI: timers, notes, CCTV static lookup.
+2. Low-risk calculators: item, craft, recycle, research, decay, upkeep. Completed in `Rust++ Tools`.
+3. Low-risk utility UI: CCTV static lookup is completed in `Rust++ Tools`; timers and notes remain future candidates.
 4. Higher-risk integrations: Discord bridge, slash commands, roles, voice/TTS. These stay skipped until the app has explicit opt-in settings and protected token storage for Discord credentials.
