@@ -4,7 +4,7 @@
 ; =============================================
 
 #define MyAppName      "RustPlusDesk"
-#define MyAppVersion   "5.0.7"
+#define MyAppVersion   "5.0.8"
 #define MyAppPublisher "Panda" 
 #define MyAppURL       "https://github.com/LazyPandax/rust-"
 #define MyAppExeName   "RustPlusDesk.exe"

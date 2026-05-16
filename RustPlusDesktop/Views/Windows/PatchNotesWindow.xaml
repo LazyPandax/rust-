@@ -76,7 +76,7 @@
                         Padding="10,6"
                         VerticalAlignment="Top">
                     <TextBlock x:Name="TxtCurrentVersion"
-                               Text="Current: v5.0.7"
+                               Text="Current: v5.0.8"
                                Foreground="#A9D9FF"
                                FontWeight="SemiBold"
                                FontSize="12"/>
@@ -87,24 +87,24 @@
                 <StackPanel>
                     <Border Style="{StaticResource ReleaseCard}">
                         <StackPanel>
-                            <TextBlock Text="v5.0.7 | Installer launch, Steam unlink, and overlay sync fixes"
+                            <TextBlock Text="v5.0.8 | Rust grid coordinate fix"
                                        Style="{StaticResource ReleaseTitle}"/>
 
                             <UniformGrid Columns="2" Margin="0,0,0,4">
                                 <StackPanel Margin="0,0,14,0">
-                                    <TextBlock Text="Updater starts setup" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="After a verified download, the updater now starts the setup file and closes the app so the install can finish."
+                                    <TextBlock Text="Correct grid labels" Style="{StaticResource FeatureTitle}"/>
+                                    <TextBlock Text="Map grid labels now keep the partial edge row and column so coordinates like U26 match Rust."
                                                Style="{StaticResource FeatureText}"/>
                                 </StackPanel>
 
                                 <StackPanel Margin="0,0,0,0">
-                                    <TextBlock Text="Private GitHub releases" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="Private release checks use a protected local GitHub token and give clearer messages when access is missing."
+                                    <TextBlock Text="Overlay alignment" Style="{StaticResource FeatureTitle}"/>
+                                    <TextBlock Text="The in-game mini map uses the same corrected grid count as the main Rust+ map."
                                                Style="{StaticResource FeatureText}"/>
                                 </StackPanel>
                             </UniformGrid>
 
-                            <TextBlock Text="Also includes the Steam unlink/logout button and local-only overlay sync behavior when no remote sync server is configured."
+                            <TextBlock Text="This fixes row and column labels being one cell off on map sizes that are not exact 150m multiples."
                                        Foreground="{DynamicResource TextSubtle}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>

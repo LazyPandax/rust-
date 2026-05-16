@@ -15,7 +15,7 @@ public partial class MainWindow
         GridLayer.Children.Clear();
         if (ChkGrid.IsChecked != true || _worldSizeS <= 0 || _worldRectPx.Width <= 0) return;
 
-        int cells = Math.Max(1, (int)Math.Round(_worldSizeS / 150.0));
+        int cells = GetRustGridCellCount(_worldSizeS);
 
         double ox = _worldRectPx.X, oy = _worldRectPx.Y;
         double ow = _worldRectPx.Width, oh = _worldRectPx.Height;
@@ -92,12 +92,21 @@ public partial class MainWindow
         return s;
     }
 
+    private static int GetRustGridCellCount(double worldSize)
+    {
+        if (worldSize <= 0) return 1;
+
+        // Rust keeps the partial edge grid when the world size is not an exact
+        // multiple of 150, so 3950 maps reach row/column 26 instead of stopping at 25.
+        return Math.Max(1, (int)Math.Ceiling(worldSize / 150.0));
+    }
+
     private bool TryGetGridRef(double x, double y, out string label)
     {
         label = "";
         if (_worldSizeS <= 0) return false;
 
-        int cells = Math.Max(1, (int)Math.Round(_worldSizeS / 150.0));
+        int cells = GetRustGridCellCount(_worldSizeS);
         double cell = _worldSizeS / (double)cells;
 
         int col = Math.Clamp((int)Math.Floor(x / cell), 0, cells - 1);
