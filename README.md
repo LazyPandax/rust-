@@ -49,8 +49,7 @@ The app ships as a single installer (bundling .NET, Node.js, WebView2 runtime, R
 
 *(I publish the signed/packaged installer as a GitHub Release asset for clean versioning and smaller repositories.)*
 
-[![YouTube Video](./RustPlusDesktop/Assets/Images/RustPlus_V4_Thumbnail.png)](https://youtu.be/tmbAn3lIKmM)  
-*(click the image to watch on YouTube)*
+![RustPlus V4 Thumbnail](./RustPlusDesktop/Assets/Images/RustPlus_V4_Thumbnail.png)
 
 ## Update 4.5.1 — The Intelligence Update (May 12th) + Shop Polling Hotfix
 <img width="595" height="331" alt="grafik" src="RustPlusDesktop/Assets/Screenshots/4.5.0.png" />
@@ -417,6 +416,4 @@ On next launch the registration will run again.
 
 ### Video Overview
 
-[![YouTube Video](./RustPlusDesktop/Assets/Images/rustplusbg.png)](https://www.youtube.com/watch?v=4NlFuLPK4wk)  
-
-*(click the image to watch on YouTube)*
+![RustPlus Background](./RustPlusDesktop/Assets/Images/rustplusbg.png)
