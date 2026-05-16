@@ -274,9 +274,6 @@ public partial class MainWindow : ui.FluentWindow
 
     public MainWindow()
     {
-        // Nur freiwillig zum Diagnostizieren:
-        var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-
         InitializeComponent();
         _vm.IsInitializing = true;
         
@@ -293,9 +290,11 @@ public partial class MainWindow : ui.FluentWindow
         InitSmoothFollowLoop();
         ApplySettings();
         _selectedMonitor = WinMonitors.All().Count > 0 ? WinMonitors.All()[0] : null;
-        AppendLog($"[items-new] baseDir={baseDir}");
         EnsureNewItemDbLoaded();
-        AppendLog($"[items-new] source={sNewDbSource} items={sItemsById.Count} byShort={sItemsByShort.Count}");
+        if (!string.IsNullOrWhiteSpace(sNewDbSource) && sItemsById.Count > 0)
+            AppendLog($"[items-new] source={sNewDbSource} items={sItemsById.Count} byShort={sItemsByShort.Count}");
+        else
+            AppendLog("[items-new] Local item database not found yet; web update will be used.");
 
         // NEU: Hintergrund-Update der Item-Liste von rusthelp.com
         _ = Task.Run(async () =>
@@ -1165,20 +1164,27 @@ public partial class MainWindow : ui.FluentWindow
         bool loaded = false;
 
         // 1) Disk-Kandidaten
-        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-        string currDir = Environment.CurrentDirectory;
-        string? entryDir = System.IO.Path.GetDirectoryName(Environment.ProcessPath);
-
-        var diskCandidates = new[]
+        var diskCandidates = new List<string>();
+        void AddCandidate(string? path)
         {
-        System.IO.Path.Combine(baseDir, "rust-item-list.json"),
-        System.IO.Path.Combine(currDir, "rust-item-list.json"),
-        entryDir is null ? null : System.IO.Path.Combine(entryDir, "rust-item-list.json"),
-        // häufige Ordner:
-        System.IO.Path.Combine(baseDir, "assets", "rust-item-list.json"),
-        System.IO.Path.Combine(baseDir, "data",   "rust-item-list.json"),
-        System.IO.Path.Combine(baseDir, "Assets", "Data", "rust-item-list.json"),
-    }.Where(p => !string.IsNullOrWhiteSpace(p)).Cast<string>();
+            if (!string.IsNullOrWhiteSpace(path) &&
+                !diskCandidates.Contains(path, StringComparer.OrdinalIgnoreCase))
+            {
+                diskCandidates.Add(path);
+            }
+        }
+
+        AddCandidate(System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "RustPlusDesk", "Data", "rust-item-list.json"));
+
+        foreach (var baseDir in RuntimeHelper.GetAppBaseCandidates())
+        {
+            AddCandidate(System.IO.Path.Combine(baseDir, "rust-item-list.json"));
+            AddCandidate(System.IO.Path.Combine(baseDir, "assets", "rust-item-list.json"));
+            AddCandidate(System.IO.Path.Combine(baseDir, "data", "rust-item-list.json"));
+            AddCandidate(System.IO.Path.Combine(baseDir, "Assets", "Data", "rust-item-list.json"));
+        }
 
         foreach (var path in diskCandidates)
         {
@@ -1567,9 +1573,9 @@ public partial class MainWindow : ui.FluentWindow
             // Grobe Validierung: ist es ein JSON Array mit Items?
             if (!json.Contains("shortName") || !json.Contains("displayName")) return false;
 
-            // Pfad bestimmen: Wir speichern direkt ins Root-Verzeichnis, da dies die höchste Priorität beim Laden hat
-            string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            string targetPath = System.IO.Path.Combine(baseDir, "rust-item-list.json");
+            string targetPath = System.IO.Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RustPlusDesk", "Data", "rust-item-list.json");
 
             // Sicherstellen, dass Ordner existiert
             string? dir = System.IO.Path.GetDirectoryName(targetPath);
@@ -4056,11 +4062,19 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
         http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         http.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
 
+        var token = Environment.GetEnvironmentVariable("RUSTPLUSDESK_GITHUB_TOKEN")
+                    ?? Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+        if (!string.IsNullOrWhiteSpace(token))
+            http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Trim());
+
         var url = $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest";
         using var resp = await http.GetAsync(url);
         if (!resp.IsSuccessStatusCode)
         {
-            AppendLog($"❌ GitHub API error: {(int)resp.StatusCode} {resp.ReasonPhrase}");
+            if (resp.StatusCode == HttpStatusCode.NotFound)
+                AppendLog("Release check unavailable: GitHub returned 404. The repository is private or the app has no GitHub token.");
+            else
+                AppendLog($"GitHub release check failed: {(int)resp.StatusCode} {resp.ReasonPhrase}");
             return null;
         }
 
