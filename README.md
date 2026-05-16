@@ -1,306 +1,135 @@
-![Headline](RustPlusDesktop/Assets/Images/headlineGIT.jpg)  
-[![Discord](https://img.shields.io/badge/Discord-Rust²%20|%20Rust%2B%20Desktop-5865f2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/G5TVPsqXQq)
+![RustPlusDesk headline](RustPlusDesktop/Assets/Images/headlineGIT.jpg)
 
+[![Discord](https://img.shields.io/badge/Discord-Rust%5E2%20%7C%20Rust%2B%20Desktop-5865f2?style=for-the-badge&logo=discord&logoColor=white)](https://discord.gg/G5TVPsqXQq)
 
-[Repository: LazyPandax/rust-](https://github.com/LazyPandax/rust-)
+# RustPlusDesk - Panda Edition
 
+RustPlusDesk is an unofficial Windows desktop app for Rust+ Companion.
 
-# Rust+ Desktop App (Unofficial) - Panda Edition
+It helps you pair Rust servers, monitor events, control Smart Devices, view team chat, track players, and work with the live map from your PC.
 
-**Made by Panda.** This private fork is maintained at [LazyPandax/rust-](https://github.com/LazyPandax/rust-) and uses that repository for releases, issue tracking, and update metadata.
+This fork is maintained by Panda at [LazyPandax/rust-](https://github.com/LazyPandax/rust-) and uses GitHub Releases for update metadata and installer downloads.
 
-**Upgrade note:** This build starts from Rust+ Desktop v5.0.1 and folds in the safe, desktop-friendly work reviewed from the old Rust++ project while leaving token-heavy Discord bot pieces out unless they are added later as an explicit opt-in integration.
+> This project is not affiliated with Facepunch Studios or Rust.
 
+## Latest Release
 
-⚠️ **Note**: This is an **unofficial** project and is not affiliated with Facepunch Studios or the game *Rust*.  
+**Current version: v5.0.7**
 
-It is open source so anyone can verify there is **no malware or hidden components**.
+[Open latest release](https://github.com/LazyPandax/rust-/releases/latest)
 
-⚠️ **Note**: If you used it for a while and can't pair new servers anymore, simply click on the Pairing button with right mouse button and select to delete the config file.
+Download `RustPlusDesk-Setup.exe` from the latest release and run it.
 
----
+### Recent Updates
 
+**v5.0.7 - Update installer fix**
 
-## 🔍 What is this?
+- Starts the verified setup file after an update download.
+- Closes RustPlusDesk before setup replaces installed files.
+- Bypasses close-to-tray during update shutdown so the upgrade does not loop.
 
+**v5.0.6 - Account, updater, and overlay cleanup**
 
+- Added a Steam unlink/logout button.
+- Fixed private GitHub release checks with a protected local token store.
+- Added clearer update diagnostics for missing token or repository access.
+- Overlay remote sync is now optional; without sync config, overlays save locally.
 
-The **Rust+ Desktop App** is a Windows application built on the official Rust+ Companion API.  
+**v5.0.0 - Panda Edition foundation**
 
-It lets you pair Rust servers, monitor in-game events, control Smart Devices, and view dynamic map markers — all on your PC.
-By now it's more than 'just' Rust Plus. It's Rust² you could say... That's why this is our new icon ;) Was about time.
-![Update](./RustPlusDesktop/Assets/Images/icon.png)  
+- Bundled runtime handling for Node.js and Rust+ listener tools.
+- Update download progress and installer verification.
+- Cleaner patch notes and support links.
+- Continued map, device, chat, player tracking, and overlay improvements from the earlier desktop builds.
 
+Older v2-v4 update notes were removed from the README front page to keep the repository clean. Use the [GitHub Releases page](https://github.com/LazyPandax/rust-/releases) for release history.
 
-The app ships as a single installer (bundling .NET, Node.js, WebView2 runtime, RustPlusAPI, etc.), so you don’t have to install dependencies manually.
+## Main Features
 
+- Pair Rust servers through Steam and the Rust+ Companion flow.
+- Connect to paired Rust servers from Windows.
+- Monitor Patrol Helicopter, Cargo Ship, Chinook, Oil Rig crate timers, and other map events.
+- Control Smart Switches and Smart Devices.
+- Import, group, and share Smart Devices with teammates.
+- Track Storage Monitors and upkeep.
+- View team chat and send event notifications.
+- Search vending machines and analyze trade routes.
+- Track players with activity history and online status.
+- Use map overlays, mini map, crosshair overlay, and custom crosshairs.
+- Use bundled runtime files, so normal users do not need to install Node.js manually.
 
+## Installation
 
----
+1. Open the [latest release](https://github.com/LazyPandax/rust-/releases/latest).
+2. Download `RustPlusDesk-Setup.exe`.
+3. Run the installer.
+4. Launch RustPlusDesk.
+5. Use the pairing button to register Rust+ Companion and link Steam.
+6. In Rust, use the Rust+ pairing option for the server you want to connect.
 
+## Private Update Access
 
+If this repository is private, update checks need a GitHub token with read access to `LazyPandax/rust-`.
 
-## 🚀 Latest Release
+Supported options:
 
+- Set `RUSTPLUSDESK_GITHUB_TOKEN`.
+- Or put the token once in `%APPDATA%\RustPlusDesk\github-token.txt`.
 
+RustPlusDesk imports the token into a DPAPI-protected file and removes the plaintext import file.
 
-➡️ **[Open the latest RustPlusDesk release](https://github.com/LazyPandax/rust-/releases)**
+To use a different release repository, set:
 
+```text
+RUSTPLUSDESK_UPDATE_REPO=owner/repo
+```
 
-*(Download `RustPlusDesk-Setup.exe` from the newest GitHub Release. The direct download URL only works after that installer is attached to a published release.)*
+Or put `owner/repo` in:
 
-![RustPlus V4 Thumbnail](./RustPlusDesktop/Assets/Images/RustPlus_V4_Thumbnail.png)
+```text
+%APPDATA%\RustPlusDesk\github-release-repo.txt
+```
 
-## Update 4.5.1 — The Intelligence Update (May 12th) + Shop Polling Hotfix
-<img width="595" height="331" alt="grafik" src="RustPlusDesktop/Assets/Screenshots/4.5.0.png" />
+## Overlay Sync
 
-**📍 Smart Map Follow**
-- **Player Tracking**: Lock the camera onto any teammate or yourself. The map smoothly centers on the target, making it ideal for tracking raids or roams in real-time.
+Remote overlay sync is optional.
 
-**💬 Chat Command Automation**
-- **Switch Control**: Control your base from anywhere by assigning aliases to Smart Switches. Use !toggle, !on, or !off in team chat.
-- **Direct Setup**: Manage all your chat command bindings directly within the Team Chat Overlay.
+Without remote sync settings, overlays are saved locally only.
 
-**🛡️ Stability Overhaul**
-- **Reliable Sync**: Fixed "ghost" devices and stale data by implementing a complete session reset on disconnect.
-- **Fast Probing**: Optimized device checks to prevent UI hangs during server lag or when devices are missing.
+To enable remote sync, configure:
 
-## Update 4.2 — Cargo Ship Overhaul (May 5th)
-<img width="595" height="331" alt="grafik" src="https://github.com/user-attachments/assets/5e19a7b3-9231-4dc3-8c3b-0a6d14bad1d3" />
+```text
+RUSTPLUS_DESK_OVERLAY_SYNC_URL
+RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX
+```
 
-**🚢 Smart Cargo Tracking**
+Or place the values in:
 
-- Route Learning: After the first full Cargo cycle, the app remembers docking times, total map life, and trigger points — saved per server and map wipe, resets automatically after a wipe.
-- Docking Countdown: A live countdown appears below the Cargo Ship while it's anchored at harbor. Docking duration is learned per server; the default fallback is 8 minutes.
-- Remaining On-Map Timer: Once a full cycle is tracked, a remaining-time countdown is shown in the Event Dock and on the Cargo Ship marker. 
-<img width="503" height="326" alt="grafik" src="https://github.com/user-attachments/assets/471ed1f8-9af3-4d5b-b3f8-9909b398a217" />
+```text
+%APPDATA%\RustPlusDesk\overlay-sync-url.txt
+%APPDATA%\RustPlusDesk\overlay-sync-secret-hex.txt
+```
 
-**💬 Cargo Chat Notifications**
-<img width="596" height="44" alt="grafik" src="https://github.com/user-attachments/assets/7ae05e27-65fe-48a3-b141-3e519762d37f" />
-- Arrival Warning: Team chat alert ~5 minutes before Cargo docks at the next harbor (requires a learned route).
-- Docking Alert: Notification when Cargo anchors at a harbor.
-- Departure Warning: Notification 5 minutes before Cargo leaves.
-- All three can be toggled individually via right-click on the Chat Alerts button.
+## Pairing Help
 
-**🛢️ Oil Rig Crate Countdown**
-~~- The app detects when a Chinook hovers over an Oil Rig and automatically starts a crate countdown on the map.~~
-<img width="651" height="223" alt="grafik" src="https://github.com/user-attachments/assets/1435999f-e06e-4f1e-9695-92d9df78e429" /> 
-(fixed by FP - we'll try to bring it back in)
+If normal pairing fails:
 
+1. Restart RustPlusDesk.
+2. Right-click the pairing button.
+3. Try the alternate browser pairing option.
+4. If needed, choose the delete config / re-pair option.
 
-## Update 4.1.0 - Crosshair Editor (Right Click Crosshair icon to access) (May 1st)
+If the listener still will not start, delete:
 
-**𖦏 Custom Crosshairs**
-- **Draw your own**: intuitive pixel-art style editor. Supports drawing tools (Pen, Pixel, Line, Square, Circle), custom colors, adjustable thickness and opacity, and full Undo/Redo support.
-- **Upload PNGs**: Upload existing PNG images to use as crosshairs. The editor automatically scales them to fit the pixel grid. You can also right-click to erase individual pixels and easily rename or delete your creations.
-![CrosshairEditor](./RustPlusDesktop/Assets/Screenshots/v4_5.png)
----
+```text
+%APPDATA%\RustPlusDesk\rustplusjs-config.json
+```
 
-## Update 4.0.0 - The Evolution Update | Major Map & Stability Overhaul (April 30th)
+Then launch RustPlusDesk and pair again.
 
-**🚀 Key Highlights**
-- **Rebuilt Core Architecture**: A massive refactoring of over 4,000 lines of code into a modular system, ensuring the app is faster and future-proof.
-- **"Dead Reckoning" Resilience**: Markers and shops no longer disappear during brief server lags. The app now uses predictive interpolation to keep player and event icons moving smoothly even when data is delayed.
-- **Interactive Event Dock**: A new real-time sidebar for active events (Patrol Heli, Cargo Ship, Chinook, etc.). Click any event to **auto-lock and track** it dynamically across the map.
-- **Smart Shop Clustering**: Multiple vending machines in one base are now grouped into clean cluster icons. Hovering over them reveals a redesigned, scrollable list of all items without map clutter.
-
-![V4 Map Overhaul](./RustPlusDesktop/Assets/Screenshots/v4_map_overhaul.png)
-
-**🛠 Improvements**
-- **60 FPS Map Animations**: Butter-smooth zooming and panning with a new cinematic "Overview Dip" when jumping across the map.
-- **Modern Shop Search**: Powered by WebView2, the new search interface is near-instant and includes advanced arbitrage (Profit Trades) and pathfinding tools.
-- **Offline Icon Caching**: All item icons are now securely cached locally using SHA1 hashes, making map loads instant and saving massive bandwidth.
-- **Flexible UI**: Added a GridSplitter for a resizable sidebar and the ability to hide the system console to maximize map space.
-
-**🙌 Special Thanks**
-This milestone release was made possible by the incredible contribution of **[JawadYzbk](https://github.com/JawadYzbk)**, who rebuilt the core architecture and implemented the advanced map features!
-
----
-
-## Update 3.5.0 - Player Intelligence & Background Ops (April 22nd)
-**🚀 New Features**
-- **Advanced Activity Intelligence**: Introducing a full-scale player tracking system! View 12-week GitHub-style activity grids and 24-hour heatmaps to predict when your enemies (or friends) are most likely to be online or sleeping.
-- **Background Operations**: The app can now reside in your System Tray. Collect player data 24/7 without having the main window open.
-- **Single Instance Management**: Launching the app via `rustplus://` links or a second desktop shortcut now automatically focuses your already running instance.
-- **Auto-Start**: New option to launch the app minimized with Windows, so your tracking database is always up to date.
-
-**🛠 Improvements & Fixes**
-- **Battlemetrics Accuracy**: Completely overhauled server identification. Fixed an issue where servers on shared IP ranges (like Rustoria) were sometimes incorrectly identified. 
-- **Tray Menu**: Dynamic tray context menu showing current tracking status and last update time.
-
-**🙌 Special Thanks**
-A massive shout-out to [JawadYzbk](https://github.com/JawadYzbk) for contributing this entire intelligence system and background logic!
+### Manual Pairing
 
-## Update 3.4.0 - Custom Alarms & Device Grouping (April 26)
-**🚀 New Features**
-- Customizable Smart Alarms: You can now set individual popup alerts and custom audio files. Perfect for turning up the volume and getting woken up specifically for Raids!
-- Smart Device Groups: Organize your setup by merging devices into groups. You can rename these groups and control multiple devices simultaneously with a single click (bringing the power of hotkeys to the UI).
-
-**🛠 Improvements**
-- Enhanced Team Uploads: Device uploads for team members now fully support hierarchical group structures. No matter how many devices you manage, everything stays organized and easy to navigate.
-
-## Update Notes 3.3.1 (February 16th 26)
-~~- **New Pre Deep Sea Notification:** Before Deep Sea is triggered, you can get a notification in Team Chat (around 3 minutes ahead of actual spawn) -> note that the direction will always be shown in West - this is not the actual spawn location. It's just coming from the fact that Deep Sea shops have negative X-coordinates.~~
-(Fixed by Facepunch)
-- **Stability Patch:** Even on weak servers the connection should now be more stable and smart devices should work more reliably. Reduced duplicate chat fetches, made shop search and shops more stable with caching icons to local drive.
-
-## Update Notes 3.3.0 (January 18th 26)
-~~- **New Oilrig Countdown:** When Oilrig is triggered, a crate icon with the remaining time appears on the map. Optional Team Chat notifications remind your team every 5 minutes until the crate unlocks.~~ (Fixed by FP)
-- **Leader Auto-Promote:** No more AFK leaders! Team members can now type `!leader` in chat to be instantly promoted to team leader (requires current leader to have the app open).
-
-## Update Notes 3.2.1 (November 21st 25)
-- You can now share Smart Devices with your team! No more pairing in-game needed. 
-  One guy who pairs the devices is enough - rest of the team just imports with 1 click.
-
-## Update Notes 3.1.2 (November 17th 25)
-Version 3.1.2 brings full Storage Monitor integration and the following optimizations:
-![Update](./RustPlusDesktop/Assets/Screenshots/3.1.0.png)  
-- Shop alerts now also trigger when item was sold out and then comes back online
-- Storage Monitor shows traffic light upkeep indicator (from 1 hr. and less)
-- Map can be zoomed with NUM +/-
-- No duplicate chat notifications when server had been desynced for a short amount of time
-
-## Update Notes 3.0.0 (October 30th 25)
-- FULL Shop Analytics Overhaul!
-  This comes with instant check for profit trades, trade route check (Buy X for Y) and more
-- Map Overlay
-  You can draw, set markers, share your map markers with team mates
-- Shop Alarm system
-  Get alerts (in chat or audio alerts) when a new shop pops up or when a suspicious shop disappeared or when your desired item is back in stock
-- new Patch Notes Button with all new features explained
-
-... and more
-
-
-## Update Notes 2.0.5 (October 6th 25)
-- Global Device Hotkeys are here! Assign one key to multiple devices to group them together.
-- new Update Button (Bug: reads current version as 0.0.0 so it will always find an update - will be fixed in the future)
-- new Pairing possibility through Edge Browser + better Logs
-- Mini Map Overlay for ingame use
-- Crosshair Overlay
-- Team Management
-- Camera Support
-- Promoting Teammember to Leader
-- Death Markers
-- Grid Corrections
-- Notifications in Chat for Deaths, Spawns, Online, Offline
-- added fetching icon symbols from rusthelp.com (including Blueprint Fragments)
-
-![Update](./RustPlusDesktop/Assets/Images/V2-1.png)  
-![Update](./RustPlusDesktop/Assets/Images/V2-2.png) 
-![Update](./RustPlusDesktop/Assets/Images/V2-3.png) 
-
-Enjoy! :) 
----
-
-
-
-## ✨ Features
-
-
-
-- Pair Rust servers via Steam + Rust+ Companion
-- **Player Activity Intelligence: 12-week heatmaps & 24h activity forecasts**
-- **Persistent Background Tracking & System Tray integration**
-- **Single Instance Management (Named Pipes)**
-- Share Smart Devices and device groups with your Team
-- Track Storage Monitors and Upkeep Time 
-- Auto-start listener when connecting to a server
-- Dynamic map (Cargo, Patrol Heli, Chinook, Travelling Vendor, Players, …)
-- Smart Devices (pair in-game while connected — shows up instantly)
-- Local storage of paired servers & devices, map overlays
-- Vending Machine Search System for Buy and Sell orders
-- Profit Trade analytics and deep trade route search (buy X for Y) 
-- Open-source for transparency and trust
-- Team Chat support and event spawn posts to chat
-- Camera Support (no pannable cams yet)
-- Mini Map and Crosshairs as Rust Overlay
-- Death Markers
-- Profile Icons
-- Chat-Notifications for spawns, shops, deaths, events and more
-
----
-
-
-
-## 🐞 Known Issues
-
-
-- **Mixed languages**: Some UI texts may still show in German if a translation was missed  
-
-- **Server-Hopping:**: Hopping through servers too quickly can cause the Listener to crash
-
-- **Many shops**: Hovering 8+ shops at once can cause the Tooltip to flicker
-
-- Please report other issues in the [Issues section](../../issues)
-
----
-
-
-
-## 🛠️ Installation & Setup
-
-
-
-1. **Download & install**  
-
-   - Get `RustPlusDesk-Setup.exe` from **[Releases](https://github.com/LazyPandax/rust-/releases)** and run it
-
-   - Private fork update checks need GitHub access. Create a fine-grained token with read access to `LazyPandax/rust-`, then either set `RUSTPLUSDESK_GITHUB_TOKEN` or place the token once in `%APPDATA%\RustPlusDesk\github-token.txt`; the app imports it into a DPAPI-protected file and removes the plaintext file.
-
-   - To use a different release repository, set `RUSTPLUSDESK_UPDATE_REPO=owner/repo` or put `owner/repo` in `%APPDATA%\RustPlusDesk\github-release-repo.txt`.
-
-   - Overlay remote team sync is optional. Without a sync server, overlays are saved locally only. To enable remote sync, set `RUSTPLUS_DESK_OVERLAY_SYNC_URL` and `RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX`, or put those values in `%APPDATA%\RustPlusDesk\overlay-sync-url.txt` and `%APPDATA%\RustPlusDesk\overlay-sync-secret-hex.txt`.
-
-
-
-2. **First run**
-
-   - Click Pairing (Listening) to start the initial setup of the Listener.
-   ⚠️ **IMPORTANT**: IF error message pops up, please restart the app, rightclick on the button and click on "Try Pairing with Edge".
-
-   - A browser popup will ask you to **pair with Companion** (Facepunch)
-
-     let it run until it's set up (needed only once)
-
-   - Click on "**Login with Steam**" and authorize your local PC to Steam (localhost)  
-
-   - Allow the connection → your Steam account is linked
-
-
-
-4. **Pair a server**  
-
-   - In the app, click **Listening (Pairing)**  
-
-   - In *Rust*, click the **Rust+ Pairing Link**  
-
-   - The server will appear automatically in the app
-
-
-
-5. **Connect**  
-
-   - Select the server and click **Connect**  
-
-   - Future sessions won’t require another Steam login
-
-
-6. **Smart Devices**  
-
-   - While connected, pair a device or server in-game → it appears instantly in the app
-
-7. **If the FCM Listener won't start after a while of using the app**
-   - you probably have to do the Pairing Process again.
-   - Rightclick the Pairing button and select "Delete Config + Pair".
-   - That's it.
-
-8. **Alternative manuall pairing**
-   - You can do the pairing manually through PowerShell. 
-
-   - Open PowerShell, 
-   - Go to your installation folder (e.g. -> a: -> cd programs -> cd RustPlusDesk)
-   - Then copy paste this Power Shell code to the console. (Press enter twice) This should pair manually and open a popup in browser:
+Run this from the RustPlusDesk install folder in PowerShell:
 
 ```powershell
 $node = ".\runtime\node-win-x64\node.exe"
@@ -313,113 +142,22 @@ if (!(Test-Path $cli)) {
     New-Item -ItemType Directory -Force -Path $dst | Out-Null
     Expand-Archive -Path $zip -DestinationPath $dst -Force
 }
-```
 
 & $node $cli fcm-register --config-file "$cfg"
+```
 
-## 🛠️ Why initial NCM registration is required:
-<details> 
-   <summary> NCM Registration Explanation </summary>
-On first launch, the app needs to establish a connection to the Rust+ Companion API.
-For this, a bundled Node.js process (rustplus-cli) is started, which takes care of two things:
+## Known Issues
 
-**Registration with Facepunch/Steam**
+- Some older UI text may still be mixed between English and German.
+- Switching servers very quickly can interrupt the listener.
+- Hovering many shop markers at the same time can make tooltips flicker.
 
-   - Opens a browser window to the official Rust+ Companion login page.
+Please report issues in the [Issues page](https://github.com/LazyPandax/rust-/issues).
 
-   - After logging in with Steam, an auth token is generated and passed back to the app.
+## Screenshots
 
-   - This token is saved in the app’s config file so the process only needs to be done once per installation.
+![Main background](./RustPlusDesktop/Assets/Images/rustplusbg.png)
 
-**Local listener for callbacks and notifications**
+![Map background](./RustPlusDesktop/Assets/Images/rustplusbg2.png)
 
-   - The Node process starts a small HTTP server on localhost:<random port> to receive the auth token.
-
-   - Afterwards, it continues running as a background listener to receive notifications (chat, alarms, events) via Google FCM and forward them to the app.
-
-**Requirements for successful registration**
-
-   - Node.js runtime and rustplus-cli are shipped with the app – no manual installation required.
-
-   - Firewall/Antivirus must not block the Node process:
-
-   - Local loopback (127.0.0.1) must be accessible for the callback port.
-
-**Outbound connections must be allowed on:**
-
-   - TCP 5228–5230 (Google FCM, mtalk.google.com)
-
-   - TCP 443 (HTTPS to Steam, Facepunch, Google)
-
-   - Browser redirect must be allowed (some security tools or proxies may block it).
-
-   - A valid Steam login is required to complete the auth flow.
-
-**👉 After successful registration, the token is stored at**
-%APPDATA%\RustPlusDesk\rustplusjs-config.json.
-You only need to re-register if this file is missing or corrupted.
-  </details>
-  
-<details>
-<summary>🔧 Troubleshooting Registration</summary>
-
-If the initial pairing does not work (no browser window opens, or it keeps restarting):
-
-- **Check if Node is running**  
-  - Open *Task Manager* → *Details* → look for `node.exe`.  
-  - Or run:  
-    ```powershell
-    tasklist | findstr node.exe
-    ```
-
-- **Check if a local port is listening**  
-  - Run:  
-    ```powershell
-    netstat -ano | findstr LISTENING | findstr 127.0.0.1
-    ```
-  - You should see a `127.0.0.1:<port>` entry with the same PID as `node.exe`.  
-  - If not: Firewall or antivirus may be blocking the local callback server.  
-
-- **Check outbound connections**  
-  Test if the required ports are open:  
-  ```powershell
-  Test-NetConnection mtalk.google.com -Port 5228
-  Test-NetConnection companion-rust.facepunch.com -Port 443
-  Test-NetConnection steamcommunity.com -Port 443
-  All should return TcpTestSucceeded : True
-- **Config reset**
-If all else fails, close the app and delete:
-%APPDATA%\RustPlusDesk\rustplusjs-config.json
-On next launch the registration will run again.
-  </details>
----
-
-
-
-## 📸 Screenshots
-
-
-
-### Main Screenshots
-
-![Main Background](./RustPlusDesktop/Assets/Images/rustplusbg.png)  
-
-![Background 2](./RustPlusDesktop/Assets/Images/rustplusbg2.png)  
-
-![Background 3](./RustPlusDesktop/Assets/Images/rustplusbg3.png)  
-
-![Background 4](./RustPlusDesktop/Assets/Images/rustplusbg4.png)  
-
-![Background 5](./RustPlusDesktop/Assets/Images/rustplusbg5.png)  
-
-![Background 6](./RustPlusDesktop/Assets/Images/rustplusbg6.png)  
-
-![Background 7](./RustPlusDesktop/Assets/Images/rustplusbg7.png)  
-
-![Background 8](./RustPlusDesktop/Assets/Images/rustplusbg8.png)
-
-
-
-### Video Overview
-
-![RustPlus Background](./RustPlusDesktop/Assets/Images/rustplusbg.png)
+![App background](./RustPlusDesktop/Assets/Images/rustplusbg3.png)
