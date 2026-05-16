@@ -1273,6 +1273,7 @@ private bool _overlayToolsVisible = false;
         try
         {
             var overlaySyncConfigured = TryGetOverlaySyncConfig(out var baseUrl, out var secretHex, out var overlaySyncDisabledReason);
+            var overlaySyncHasAnyConfig = HasOverlaySyncConfigInput();
 
             // optional, aber sinnvoll: sicherstellen, dass die lokale Datei "aktuell" ist
             try
@@ -1330,7 +1331,10 @@ private bool _overlayToolsVisible = false;
 
             if (!overlaySyncConfigured)
             {
-                AppendLog("[overlay] Remote sync disabled: " + overlaySyncDisabledReason);
+                if (overlaySyncHasAnyConfig)
+                    AppendLog("[overlay] Remote sync skipped: " + overlaySyncDisabledReason);
+                else
+                    AppendLog($"[overlay] Overlay saved locally (devices preserved: {data.Devices.Count}).");
                 return;
             }
 
@@ -1731,11 +1735,17 @@ private void SaveOwnOverlayToJson()
     }
 
     // --- Overlay Sync Config ---
-    private static readonly string? OverlaySyncSecretHex =
-        Environment.GetEnvironmentVariable("RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX");
+    private const string OverlaySyncUrlEnvName = "RUSTPLUS_DESK_OVERLAY_SYNC_URL";
+    private const string OverlaySyncSecretEnvName = "RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX";
 
-    private static readonly string? OverlaySyncBaseUrl =
-        Environment.GetEnvironmentVariable("RUSTPLUS_DESK_OVERLAY_SYNC_URL")?.TrimEnd('/');
+    private static string OverlaySyncConfigDir =>
+        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "RustPlusDesk");
+
+    private static string OverlaySyncUrlConfigPath =>
+        System.IO.Path.Combine(OverlaySyncConfigDir, "overlay-sync-url.txt");
+
+    private static string OverlaySyncSecretHexConfigPath =>
+        System.IO.Path.Combine(OverlaySyncConfigDir, "overlay-sync-secret-hex.txt");
 
     private static readonly bool AllowUnsafeHttpOverlaySync =
         string.Equals(Environment.GetEnvironmentVariable("RUSTPLUS_DESK_ALLOW_UNSAFE_HTTP_OVERLAY_SYNC"), "1", StringComparison.OrdinalIgnoreCase);
@@ -1747,13 +1757,13 @@ private void SaveOwnOverlayToJson()
 
     private static bool TryGetOverlaySyncConfig(out string baseUrl, out string secretHex, out string reason)
     {
-        baseUrl = OverlaySyncBaseUrl ?? string.Empty;
-        secretHex = OverlaySyncSecretHex?.Trim() ?? string.Empty;
+        baseUrl = ReadOverlaySyncBaseUrl() ?? string.Empty;
+        secretHex = ReadOverlaySyncSecretHex()?.Trim() ?? string.Empty;
         reason = string.Empty;
 
         if (string.IsNullOrWhiteSpace(baseUrl) || string.IsNullOrWhiteSpace(secretHex))
         {
-            reason = "remote sync is disabled until RUSTPLUS_DESK_OVERLAY_SYNC_URL and RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX are configured.";
+            reason = $"remote sync is optional and is not fully configured. Set {OverlaySyncUrlEnvName} and {OverlaySyncSecretEnvName}, or use {OverlaySyncUrlConfigPath} and {OverlaySyncSecretHexConfigPath}.";
             return false;
         }
 
@@ -1777,6 +1787,35 @@ private void SaveOwnOverlayToJson()
         }
 
         return true;
+    }
+
+    private static bool HasOverlaySyncConfigInput()
+        => !string.IsNullOrWhiteSpace(ReadOverlaySyncBaseUrl()) ||
+           !string.IsNullOrWhiteSpace(ReadOverlaySyncSecretHex());
+
+    private static string? ReadOverlaySyncBaseUrl()
+        => ReadOverlaySyncSetting(OverlaySyncUrlEnvName, OverlaySyncUrlConfigPath)?.TrimEnd('/');
+
+    private static string? ReadOverlaySyncSecretHex()
+        => ReadOverlaySyncSetting(OverlaySyncSecretEnvName, OverlaySyncSecretHexConfigPath);
+
+    private static string? ReadOverlaySyncSetting(string environmentVariable, string configPath)
+    {
+        var value = Environment.GetEnvironmentVariable(environmentVariable);
+        if (!string.IsNullOrWhiteSpace(value))
+            return value.Trim();
+
+        try
+        {
+            if (File.Exists(configPath))
+                return File.ReadAllText(configPath).Trim();
+        }
+        catch
+        {
+            // Invalid config files are handled by the normal validation path.
+        }
+
+        return null;
     }
 
 

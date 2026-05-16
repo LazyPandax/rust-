@@ -38,6 +38,34 @@ internal static class GitHubTokenStore
     public static bool HasConfiguredToken()
         => !string.IsNullOrWhiteSpace(ReadToken());
 
+    public static void SaveToken(string? token)
+    {
+        var normalized = NormalizeToken(token);
+        if (string.IsNullOrWhiteSpace(normalized))
+        {
+            DeleteToken();
+            return;
+        }
+
+        Directory.CreateDirectory(AppDir);
+        File.WriteAllText(ProtectedTokenPath, SecretProtector.Protect(normalized));
+        TryDeletePlaintext();
+    }
+
+    public static void DeleteToken()
+    {
+        TryDeletePlaintext();
+        try
+        {
+            if (File.Exists(ProtectedTokenPath))
+                File.Delete(ProtectedTokenPath);
+        }
+        catch
+        {
+            // best effort
+        }
+    }
+
     private static string? TryImportPlaintextToken()
     {
         try

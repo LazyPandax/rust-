@@ -204,8 +204,10 @@ public class MainViewModel : INotifyPropertyChanged
     public string SteamId64
     {
         get => _steamId64;
-        set { _steamId64 = value; OnPropertyChanged(); }
+        set { _steamId64 = value; OnPropertyChanged(); OnPropertyChanged(nameof(IsSteamLinked)); }
     }
+
+    public bool IsSteamLinked => !string.IsNullOrWhiteSpace(SteamId64);
 
     public string FcmExpiryText
     {

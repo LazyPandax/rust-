@@ -156,6 +156,43 @@ public partial class MainWindow
         await HardResetAsync(reconnect: false);
     }
 
+    private async void BtnLogoutSteam_Click(object sender, RoutedEventArgs e)
+    {
+        var ask = MessageBox.Show(
+            "Log out of the linked Steam account?\n\n" +
+            "This removes the saved Steam ID and pairing credentials. Your server list stays, but alerts and smart devices need a fresh pair before they work again.",
+            "Log out Steam link", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+
+        if (ask != MessageBoxResult.Yes) return;
+
+        await HardResetAsync(reconnect: false);
+        await ResetPairingConfigAsync(stopListenerFirst: true);
+
+        _vm.SteamId64 = "";
+        TrackingService.SteamId64 = "";
+        TrackingService.FcmIssuedAt = null;
+        TrackingService.FcmExpiresAt = null;
+
+        foreach (var profile in _vm.Servers)
+        {
+            profile.SteamId64 = "";
+            profile.IsConnected = false;
+            profile.IsFullConnected = false;
+        }
+
+        _vm.Save();
+        _vm.MyAvatar = null;
+        ImgSteam.ToolTip = null;
+        TxtSteamName.Text = "Steam Account";
+        TxtSteamId.Text = "Not Logged In";
+        TxtPairingState.Text = "Pairing: logged out";
+        _vm.NotifyFcmChanged();
+
+        AppendLog("[steam] Linked Steam account logged out.");
+        MessageBox.Show("Steam link logged out. Use Login & Pair Account to connect again.",
+            "Steam link", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     private void BtnShowServerInfo_Click(object sender, RoutedEventArgs e)
     {
         if (_vm.Selected == null) return;

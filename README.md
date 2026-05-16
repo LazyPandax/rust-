@@ -248,6 +248,10 @@ Enjoy! :)
 
    - Private fork update checks need GitHub access. Create a fine-grained token with read access to `LazyPandax/rust-`, then either set `RUSTPLUSDESK_GITHUB_TOKEN` or place the token once in `%APPDATA%\RustPlusDesk\github-token.txt`; the app imports it into a DPAPI-protected file and removes the plaintext file.
 
+   - To use a different release repository, set `RUSTPLUSDESK_UPDATE_REPO=owner/repo` or put `owner/repo` in `%APPDATA%\RustPlusDesk\github-release-repo.txt`.
+
+   - Overlay remote team sync is optional. Without a sync server, overlays are saved locally only. To enable remote sync, set `RUSTPLUS_DESK_OVERLAY_SYNC_URL` and `RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX`, or put those values in `%APPDATA%\RustPlusDesk\overlay-sync-url.txt` and `%APPDATA%\RustPlusDesk\overlay-sync-secret-hex.txt`.
+
 
 
 2. **First run**

@@ -4012,8 +4012,6 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
     // CHECK FOR UPDATES
 
     // --- Konfiguration ---
-    private const string RepoOwner = "LazyPandax";
-    private const string RepoName = "rust-";
     private const string InstallerAssetName = "RustPlusDesk-Setup.exe";
     private string? _lastReleaseCheckFailureMessage;
 
@@ -4059,7 +4057,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
     private sealed record GitHubRelease(string TagName, string? Name, string? Body, List<GitHubAsset> Assets);
     private sealed record GitHubAsset(string Name, string BrowserDownloadUrl, string? Digest);
 
-    private async Task<(Version latest, string tag, string? downloadUrl, string? sha256Digest)?> GetLatestReleaseAsync(bool reportErrors = true)
+    private async Task<(Version latest, string tag, string? downloadUrl, string? sha256Digest, bool downloadNeedsGitHubToken)?> GetLatestReleaseAsync(bool reportErrors = true)
     {
         _lastReleaseCheckFailureMessage = null;
 
@@ -4072,11 +4070,25 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
         if (!string.IsNullOrWhiteSpace(token))
             http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var url = $"https://api.github.com/repos/{RepoOwner}/{RepoName}/releases/latest";
+        var source = UpdateReleaseSource.Load();
+        var url = $"https://api.github.com/repos/{source.FullName}/releases/latest";
+        var hasToken = !string.IsNullOrWhiteSpace(token);
         using var resp = await http.GetAsync(url);
         if (!resp.IsSuccessStatusCode)
         {
-            var message = BuildReleaseCheckError(resp.StatusCode, resp.ReasonPhrase, !string.IsNullOrWhiteSpace(token));
+            if (resp.StatusCode == HttpStatusCode.NotFound)
+            {
+                var listedRelease = await TryGetLatestReleaseFromListAsync(http, hasToken, source);
+                if (listedRelease is not null)
+                    return listedRelease;
+
+                var notFoundMessage = await BuildReleaseCheckNotFoundErrorAsync(http, hasToken, source);
+                _lastReleaseCheckFailureMessage = notFoundMessage;
+                if (reportErrors) AppendLog(notFoundMessage);
+                return null;
+            }
+
+            var message = BuildReleaseCheckError(resp.StatusCode, resp.ReasonPhrase, hasToken, source);
             _lastReleaseCheckFailureMessage = message;
             if (reportErrors) AppendLog(message);
             return null;
@@ -4084,42 +4096,165 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
 
         using var stream = await resp.Content.ReadAsStreamAsync();
         using var doc = await JsonDocument.ParseAsync(stream);
-        var root = doc.RootElement;
+        return ParseReleaseInfo(doc.RootElement, hasToken, source);
+    }
 
-        var tag = root.GetProperty("tag_name").GetString() ?? "";
-        var assets = root.GetProperty("assets").EnumerateArray();
+    private async Task<(Version latest, string tag, string? downloadUrl, string? sha256Digest, bool downloadNeedsGitHubToken)?> TryGetLatestReleaseFromListAsync(HttpClient http, bool hasToken, UpdateReleaseSource source)
+    {
+        try
+        {
+            var url = $"https://api.github.com/repos/{source.FullName}/releases?per_page=10";
+            using var resp = await http.GetAsync(url);
+            if (!resp.IsSuccessStatusCode) return null;
+
+            using var stream = await resp.Content.ReadAsStreamAsync();
+            using var doc = await JsonDocument.ParseAsync(stream);
+            if (doc.RootElement.ValueKind != JsonValueKind.Array) return null;
+
+            foreach (var release in doc.RootElement.EnumerateArray())
+            {
+                if (release.TryGetProperty("draft", out var draftEl) &&
+                    draftEl.ValueKind == JsonValueKind.True)
+                    continue;
+
+                var info = ParseReleaseInfo(release, hasToken, source);
+                if (info is not null)
+                    return info;
+            }
+        }
+        catch (Exception ex)
+        {
+            AppendLog("Release list fallback failed: " + ex.Message);
+        }
+
+        return null;
+    }
+
+    private (Version latest, string tag, string? downloadUrl, string? sha256Digest, bool downloadNeedsGitHubToken)? ParseReleaseInfo(JsonElement root, bool hasToken, UpdateReleaseSource source)
+    {
+        if (!root.TryGetProperty("tag_name", out var tagEl)) return null;
+
+        var tag = tagEl.GetString() ?? "";
+        if (string.IsNullOrWhiteSpace(tag)) return null;
 
         string? dl = null;
         string? sha256Digest = null;
-        foreach (var a in assets)
+        bool downloadNeedsGitHubToken = false;
+
+        if (root.TryGetProperty("assets", out var assetsEl) &&
+            assetsEl.ValueKind == JsonValueKind.Array)
         {
-            var name = a.GetProperty("name").GetString() ?? "";
-            if (string.Equals(name, InstallerAssetName, StringComparison.OrdinalIgnoreCase))
+            foreach (var a in assetsEl.EnumerateArray())
             {
-                dl = a.GetProperty("browser_download_url").GetString();
-                if (a.TryGetProperty("digest", out var digestEl))
-                    sha256Digest = NormalizeReleaseDigest(digestEl.GetString());
-                break;
+                var name = a.TryGetProperty("name", out var nameEl) ? nameEl.GetString() ?? "" : "";
+                if (string.Equals(name, InstallerAssetName, StringComparison.OrdinalIgnoreCase))
+                {
+                    var browserUrl = a.TryGetProperty("browser_download_url", out var browserEl)
+                        ? browserEl.GetString()
+                        : null;
+
+                    if (hasToken &&
+                        a.TryGetProperty("id", out var idEl) &&
+                        idEl.TryGetInt64(out var assetId) &&
+                        assetId > 0)
+                    {
+                        dl = $"https://api.github.com/repos/{source.FullName}/releases/assets/{assetId}";
+                        downloadNeedsGitHubToken = true;
+                    }
+                    else
+                    {
+                        dl = browserUrl;
+                    }
+
+                    if (a.TryGetProperty("digest", out var digestEl))
+                        sha256Digest = NormalizeReleaseDigest(digestEl.GetString());
+                    break;
+                }
             }
         }
 
         var v = NormalizeVer(tag);
         if (!Version.TryParse(v, out var latest))
         {
-            AppendLog($"⚠️ Could not parse version from tag “{tag}”.");
+            AppendLog($"Could not parse version from tag \"{tag}\".");
             return null;
         }
-        return (latest, tag, dl, sha256Digest);
+
+        return (latest, tag, dl, sha256Digest, downloadNeedsGitHubToken);
     }
 
-    private static string BuildReleaseCheckError(HttpStatusCode statusCode, string? reasonPhrase, bool hasToken)
+    private async Task<string> BuildReleaseCheckNotFoundErrorAsync(HttpClient http, bool hasToken, UpdateReleaseSource source)
+    {
+        try
+        {
+            var repoUrl = $"https://api.github.com/repos/{source.FullName}";
+            using var repoResp = await http.GetAsync(repoUrl);
+            if (repoResp.IsSuccessStatusCode)
+                return $"Release check unavailable: {source.FullName} is reachable, but no published release was found. Publish a release with {InstallerAssetName} attached.";
+
+            if (repoResp.StatusCode == HttpStatusCode.NotFound && !hasToken)
+                return $"Release check skipped: {source.FullName} is private. Add a GitHub token at {GitHubTokenStore.PlainImportPath} or set RUSTPLUSDESK_GITHUB_TOKEN.";
+
+            if (repoResp.StatusCode == HttpStatusCode.NotFound)
+            {
+                var tokenDiagnostic = await BuildTokenRepoAccessDiagnosticAsync(http, source);
+                return !string.IsNullOrWhiteSpace(tokenDiagnostic)
+                    ? tokenDiagnostic
+                    : $"Release check unavailable: GitHub returned 404 for {source.FullName} even with a configured token. Replace the token or confirm the repo name.";
+            }
+
+            return BuildReleaseCheckError(repoResp.StatusCode, repoResp.ReasonPhrase, hasToken, source);
+        }
+        catch (Exception ex)
+        {
+            return "Release check unavailable: " + ex.Message;
+        }
+    }
+
+    private static async Task<string?> BuildTokenRepoAccessDiagnosticAsync(HttpClient http, UpdateReleaseSource source)
+    {
+        try
+        {
+            using var userResp = await http.GetAsync("https://api.github.com/user");
+            if (!userResp.IsSuccessStatusCode) return null;
+
+            using var userStream = await userResp.Content.ReadAsStreamAsync();
+            using var userDoc = await JsonDocument.ParseAsync(userStream);
+            var login = userDoc.RootElement.TryGetProperty("login", out var loginEl)
+                ? loginEl.GetString()
+                : null;
+
+            using var reposResp = await http.GetAsync("https://api.github.com/user/repos?per_page=1&affiliation=owner,collaborator,organization_member");
+            if (!reposResp.IsSuccessStatusCode) return null;
+
+            using var reposStream = await reposResp.Content.ReadAsStreamAsync();
+            using var reposDoc = await JsonDocument.ParseAsync(reposStream);
+            var visibleRepoCount = reposDoc.RootElement.ValueKind == JsonValueKind.Array
+                ? reposDoc.RootElement.GetArrayLength()
+                : -1;
+
+            if (visibleRepoCount == 0)
+            {
+                var who = string.IsNullOrWhiteSpace(login) ? "the configured token" : $"the configured token for {login}";
+                return $"Release check skipped: {who} is valid, but it has no repository access. Create a GitHub token with read access to {source.FullName}, or set RUSTPLUSDESK_UPDATE_REPO / {UpdateReleaseSource.ConfigPath} to the repo that hosts releases.";
+            }
+        }
+        catch
+        {
+            // Best effort only. The original 404 message is still useful.
+        }
+
+        return null;
+    }
+
+    private static string BuildReleaseCheckError(HttpStatusCode statusCode, string? reasonPhrase, bool hasToken, UpdateReleaseSource source)
     {
         return statusCode switch
         {
             HttpStatusCode.NotFound when !hasToken =>
-                $"Release check skipped: {RepoOwner}/{RepoName} is private. Add a GitHub token at {GitHubTokenStore.PlainImportPath} or set RUSTPLUSDESK_GITHUB_TOKEN.",
+                $"Release check skipped: {source.FullName} is private. Add a GitHub token at {GitHubTokenStore.PlainImportPath} or set RUSTPLUSDESK_GITHUB_TOKEN.",
             HttpStatusCode.NotFound =>
-                $"Release check unavailable: GitHub returned 404 for {RepoOwner}/{RepoName}. Check that the token can access the repo and that the repo name is correct.",
+                $"Release check unavailable: GitHub returned 404 for {source.FullName}. Check that the token can access the repo and that the repo name is correct.",
             HttpStatusCode.Unauthorized =>
                 "Release check unavailable: GitHub rejected the configured token. Replace it with a valid token that can read releases.",
             HttpStatusCode.Forbidden =>
@@ -4161,13 +4296,26 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
         Process.Start(psi);
     }
 
-    private async Task<string?> DownloadInstallerAsync(string url, IProgress<DownloadReport>? progress = null)
+    private async Task<string?> DownloadInstallerAsync(string url, bool useGitHubToken, IProgress<DownloadReport>? progress = null)
     {
         var target = System.IO.Path.Combine(System.IO.Path.GetTempPath(), InstallerAssetName);
         try
         {
             using var http = new HttpClient();
             http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("RustPlusDesk", GetCurrentVersion().ToString()));
+            if (useGitHubToken)
+            {
+                var token = GitHubTokenStore.ReadToken();
+                if (string.IsNullOrWhiteSpace(token))
+                {
+                    AppendLog("Cannot download private GitHub release asset without a configured token.");
+                    return null;
+                }
+
+                http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+                http.DefaultRequestHeaders.Add("X-GitHub-Api-Version", "2022-11-28");
+            }
 
             using var resp = await http.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
             resp.EnsureSuccessStatusCode();
@@ -4368,7 +4516,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
             var latestInfo = await GetLatestReleaseAsync(reportErrors: false);
             if (latestInfo is null) return;
 
-            var (latest, tag, _, _) = latestInfo.Value;
+            var (latest, tag, _, _, _) = latestInfo.Value;
             var curr = AppInfo.VersionForCompare;
 
             bool updateAvailable = false;
@@ -4413,7 +4561,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
                 return;
             }
 
-            var (latest, tag, dlUrl, sha256Digest) = latestInfo.Value;
+            var (latest, tag, dlUrl, sha256Digest, downloadNeedsGitHubToken) = latestInfo.Value;
             AppendLog($"Current: {AppInfo.VersionShort} | Latest: {latest} ({tag})");
 
             bool updateAvailable = false;
@@ -4453,7 +4601,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
                     $"New version available: {tag}\nOpen Releases page?",
                     "Update available", MessageBoxButton.YesNo, MessageBoxImage.Question);
                 if (open == MessageBoxResult.Yes)
-                    Process.Start(new ProcessStartInfo($"https://github.com/{RepoOwner}/{RepoName}/releases/latest") { UseShellExecute = true });
+                    Process.Start(new ProcessStartInfo(UpdateReleaseSource.Load().ReleasesUrl) { UseShellExecute = true });
                 return;
             }
 
@@ -4477,7 +4625,7 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
                 _vm.UpdateDownloadSize = $"{r.BytesReceived} / {r.TotalBytes}";
                 _vm.UpdateDownloadPercentage = r.Percentage;
             });
-            var path = await DownloadInstallerAsync(dlUrl!, prog);
+            var path = await DownloadInstallerAsync(dlUrl!, downloadNeedsGitHubToken, prog);
 
             _vm.IsDownloadingUpdate = false;
             // _vm.IsBusy = false; _vm.BusyText = "";
