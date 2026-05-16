@@ -1,6 +1,7 @@
 using RustPlusDesk.Models;
 using RustPlusDesk.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -101,6 +102,18 @@ namespace RustPlusDesk.Services
 
             Directory.CreateDirectory(Path.GetDirectoryName(ConfigPath)!);
             FcmConfigStore.EnsurePlaintextForCli();
+            var browserPath = FindEdge();
+            var browserEnv = browserPath is null
+                ? Array.Empty<(string key, string value)>()
+                : new[]
+                {
+                    ("RUSTPLUSDESK_BROWSER_PATH", browserPath),
+                    ("PUPPETEER_EXECUTABLE_PATH", browserPath),
+                    ("CHROME_PATH", browserPath)
+                };
+
+            if (browserPath is not null)
+                _log($"Using browser for pairing: {browserPath}");
 
             // 1) Registrierung nur, wenn keine/zu kleine Config
             if (!File.Exists(ConfigPath) || new FileInfo(ConfigPath).Length < 50)
@@ -112,10 +125,11 @@ namespace RustPlusDesk.Services
                     $"\"{cli}\" fcm-register --config-file=\"{ConfigPath}\"",
                     wd,
                     "fcm-register",
-                    _cts.Token
+                    _cts.Token,
+                    browserEnv
                 );
                 
-                if (regExitCode != 0)
+                if (regExitCode != 0 && browserPath is null)
                 {
                     var edge = FindEdge();
                     if (edge != null)
@@ -138,7 +152,7 @@ namespace RustPlusDesk.Services
                 
                 if (regExitCode != 0)
                 {
-                    _log("❌ Registering failed. Please ensure Chrome or Edge is installed, or run Start using Edge.");
+                    _log("❌ Registering failed. Please install Microsoft Edge/Chrome/Brave/Opera GX, or set RUSTPLUSDESK_BROWSER_PATH to your Chromium browser.");
                     FcmConfigStore.ProtectPlaintextAtRest(deletePlaintext: true);
                     _running = false;
                     Stopped?.Invoke(this, EventArgs.Empty);
@@ -702,11 +716,50 @@ namespace RustPlusDesk.Services
 
         private static string? FindEdge()
         {
-            string p1 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                                     "Microsoft", "Edge", "Application", "msedge.exe");
-            string p2 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                                     "Microsoft", "Edge", "Application", "msedge.exe");
-            return File.Exists(p1) ? p1 : (File.Exists(p2) ? p2 : null);
+            var candidates = new List<string?>();
+            candidates.Add(Environment.GetEnvironmentVariable("RUSTPLUSDESK_BROWSER_PATH"));
+            candidates.Add(Environment.GetEnvironmentVariable("CHROME_PATH"));
+            candidates.Add(Environment.GetEnvironmentVariable("PUPPETEER_EXECUTABLE_PATH"));
+
+            var roots = new[]
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            };
+
+            var relativePaths = new[]
+            {
+                Path.Combine("Microsoft", "Edge", "Application", "msedge.exe"),
+                Path.Combine("Google", "Chrome", "Application", "chrome.exe"),
+                Path.Combine("BraveSoftware", "Brave-Browser", "Application", "brave.exe"),
+                Path.Combine("Chromium", "Application", "chrome.exe"),
+                Path.Combine("Vivaldi", "Application", "vivaldi.exe"),
+                Path.Combine("Programs", "Opera GX", "opera.exe"),
+                Path.Combine("Programs", "Opera", "opera.exe"),
+                Path.Combine("Programs", "Opera GX", "launcher.exe"),
+                Path.Combine("Programs", "Opera", "launcher.exe"),
+                Path.Combine("Opera", "opera.exe"),
+                Path.Combine("Opera GX", "opera.exe")
+            };
+
+            foreach (var root in roots.Where(r => !string.IsNullOrWhiteSpace(r)))
+            {
+                foreach (var rel in relativePaths)
+                    candidates.Add(Path.Combine(root, rel));
+            }
+
+            foreach (var candidate in candidates)
+            {
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(candidate) && File.Exists(candidate))
+                        return candidate;
+                }
+                catch { }
+            }
+
+            return null;
         }
 
         private static Process StartProcessDirectWithEnv(
@@ -786,19 +839,19 @@ namespace RustPlusDesk.Services
             var edge = FindEdge();
             if (edge == null)
             {
-                _log("❌ Microsoft Edge wurde nicht gefunden. Bitte Edge installieren oder normalen Start verwenden.");
+                _log("❌ No Chromium browser found. Install Microsoft Edge/Chrome/Brave/Opera GX, or set RUSTPLUSDESK_BROWSER_PATH.");
                 return;
             }
             var env = new (string key, string value)[] {
         ("PUPPETEER_EXECUTABLE_PATH", edge),
         ("CHROME_PATH", edge)
     };
-            _log($"Using Edge for Puppeteer: {edge}");
+            _log($"Using browser for pairing: {edge}");
 
-            // Registrierung (nur falls nötig), aber via Edge
+            // Registrierung (nur falls nötig), aber via Chromium-Browser
             if (!File.Exists(ConfigPath) || new FileInfo(ConfigPath).Length < 50)
             {
-                _log("Starting one time registration (fcm-register) via Edge …");
+                _log("Starting one time registration (fcm-register) via browser …");
                 await RunProcessDirectAsyncWithEnv(
                     node,
                     $"\"{cli}\" fcm-register --config-file=\"{ConfigPath}\"",
@@ -819,8 +872,8 @@ namespace RustPlusDesk.Services
                 RegistrationCompleted?.Invoke(this, EventArgs.Empty);
             }
 
-            // Listener via Edge (mit ENV)
-            _log("Starting Listener (fcm-listen) via Edge …");
+            // Listener via Browser-ENV
+            _log("Starting Listener (fcm-listen) via browser …");
             _listenProc = StartProcessDirectWithEnv(
                 node,
                 $"\"{cli}\" fcm-listen --config-file=\"{ConfigPath}\"",
