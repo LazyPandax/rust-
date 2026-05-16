@@ -44,7 +44,7 @@ The app ships as a single installer (bundling .NET, Node.js, WebView2 runtime, R
 
 
 
-➡️ **[Download the latest RustPlusDesk-Setup.exe](../../releases/latest)**
+➡️ **[Download the latest RustPlusDesk-Setup.exe](https://github.com/LazyPandax/rust-/releases/latest/download/RustPlusDesk-Setup.exe)**
 
 
 *(I publish the signed/packaged installer as a GitHub Release asset for clean versioning and smaller repositories.)*
@@ -244,7 +244,7 @@ Enjoy! :)
 
 1. **Download & install**  
 
-   - Get the installer from **[Releases](../../releases/latest)** and run it
+   - Get the installer from **[Releases](https://github.com/LazyPandax/rust-/releases/latest/download/RustPlusDesk-Setup.exe)** and run it
 
 
 
