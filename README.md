@@ -20,30 +20,6 @@ This fork is maintained by Panda at [LazyPandax/rust-](https://github.com/LazyPa
 
 Download `RustPlusDesk-Setup.exe` from the latest release and run it.
 
-### Recent Updates
-
-**v5.0.7 - Update installer fix**
-
-- Starts the verified setup file after an update download.
-- Closes RustPlusDesk before setup replaces installed files.
-- Bypasses close-to-tray during update shutdown so the upgrade does not loop.
-
-**v5.0.6 - Account, updater, and overlay cleanup**
-
-- Added a Steam unlink/logout button.
-- Fixed private GitHub release checks with a protected local token store.
-- Added clearer update diagnostics for missing token or repository access.
-- Overlay remote sync is now optional; without sync config, overlays save locally.
-
-**v5.0.0 - Panda Edition foundation**
-
-- Bundled runtime handling for Node.js and Rust+ listener tools.
-- Update download progress and installer verification.
-- Cleaner patch notes and support links.
-- Continued map, device, chat, player tracking, and overlay improvements from the earlier desktop builds.
-
-Older v2-v4 update notes were removed from the README front page to keep the repository clean. Use the [GitHub Releases page](https://github.com/LazyPandax/rust-/releases) for release history.
-
 ## Main Features
 
 - Pair Rust servers through Steam and the Rust+ Companion flow.
