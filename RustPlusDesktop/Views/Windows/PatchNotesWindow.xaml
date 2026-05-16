@@ -40,11 +40,6 @@
             <Setter Property="Margin" Value="0,0,0,10"/>
         </Style>
 
-        <Style x:Key="OlderReleaseExpander" TargetType="Expander">
-            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-        </Style>
     </Window.Resources>
 
     <Border Background="{DynamicResource Surface}"
@@ -76,7 +71,7 @@
                         Padding="10,6"
                         VerticalAlignment="Top">
                     <TextBlock x:Name="TxtCurrentVersion"
-                               Text="Current: v5.0.8"
+                               Text="Current: v5.0.9"
                                Foreground="#A9D9FF"
                                FontWeight="SemiBold"
                                FontSize="12"/>
@@ -87,176 +82,29 @@
                 <StackPanel>
                     <Border Style="{StaticResource ReleaseCard}">
                         <StackPanel>
-                            <TextBlock Text="v5.0.8 | Rust grid coordinate fix"
+                            <TextBlock Text="v5.0.9 | Patch notes cleanup"
                                        Style="{StaticResource ReleaseTitle}"/>
 
                             <UniformGrid Columns="2" Margin="0,0,0,4">
                                 <StackPanel Margin="0,0,14,0">
-                                    <TextBlock Text="Correct grid labels" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="Map grid labels now keep the partial edge row and column so coordinates like U26 match Rust."
+                                    <TextBlock Text="Current update only" Style="{StaticResource FeatureTitle}"/>
+                                    <TextBlock Text="The patch notes window now shows the latest update without the old release history blocks."
                                                Style="{StaticResource FeatureText}"/>
                                 </StackPanel>
 
                                 <StackPanel Margin="0,0,0,0">
-                                    <TextBlock Text="Overlay alignment" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="The in-game mini map uses the same corrected grid count as the main Rust+ map."
+                                    <TextBlock Text="Cleaner window" Style="{StaticResource FeatureTitle}"/>
+                                    <TextBlock Text="Removed the earlier releases and older updates sections from the visible patch notes."
                                                Style="{StaticResource FeatureText}"/>
                                 </StackPanel>
                             </UniformGrid>
 
-                            <TextBlock Text="This fixes row and column labels being one cell off on map sizes that are not exact 150m multiples."
+                            <TextBlock Text="Older details stay out of the app window so the screen stays focused and short."
                                        Foreground="{DynamicResource TextSubtle}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
 
-                    <Border Style="{StaticResource ReleaseCard}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="240"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <Border Background="#101318"
-                                    BorderBrush="{DynamicResource CardBorder}"
-                                    BorderThickness="1"
-                                    CornerRadius="6"
-                                    Padding="4"
-                                    Margin="0,0,14,0">
-                                <Image Source="pack://application:,,,/Assets/Images/RustPlus_V5_Thumbnail.jpg"
-                                       Stretch="Uniform"
-                                       MaxHeight="170"/>
-                            </Border>
-
-                            <StackPanel Grid.Column="1">
-                                <TextBlock Text="v5.0.0 | The Game Changer Update"
-                                           Style="{StaticResource ReleaseTitle}"/>
-
-                                <TextBlock Text="Auto-update and runtime management" Style="{StaticResource FeatureTitle}"/>
-                                <TextBlock Text="Background release checks, installer download progress, and centralized runtime handling for the Node.js listener."
-                                           Style="{StaticResource FeatureText}"/>
-
-                                <TextBlock Text="Modern map and interface work" Style="{StaticResource FeatureTitle}"/>
-                                <TextBlock Text="A cleaner edge-to-edge layout, smoother player movement, map follow improvements, and a repaired center-on-map flow."
-                                           Style="{StaticResource FeatureText}"/>
-
-                                <TextBlock Text="Smarter devices and alerts" Style="{StaticResource FeatureTitle}"/>
-                                <TextBlock Text="Storage Monitor detection, !Upkeep support, expanded chat alerts, Smart Alarm fixes, and FCM hardening."
-                                           Style="{StaticResource FeatureText}"/>
-
-                                <TextBlock Text="Player tracking upgrades" Style="{StaticResource FeatureTitle}"/>
-                                <TextBlock Text="Rebuilt player cards with custom groups, colors, online state, play time, and a context menu."
-                                           Style="{StaticResource FeatureText}"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
-
-                    <TextBlock Text="Earlier Releases"
-                               Foreground="{DynamicResource Accent}"
-                               FontWeight="SemiBold"
-                               FontSize="14"
-                               Margin="0,6,0,8"/>
-
-                    <Border Style="{StaticResource ReleaseCard}">
-                        <StackPanel>
-                            <Expander Style="{StaticResource OlderReleaseExpander}">
-                                <Expander.Header>
-                                    <TextBlock Text="v4.5.3 | Audio Smart Alert Hotfix" FontWeight="SemiBold"/>
-                                </Expander.Header>
-                                <StackPanel Margin="0,10,0,0">
-                                    <Image Source="pack://application:,,,/Assets/Screenshots/4.5.0.png"
-                                           Stretch="Uniform"
-                                           MaxHeight="260"
-                                           Margin="0,0,0,12"/>
-                                    <TextBlock Text="Smart map follow and player tracking" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="Follow yourself, teammates, or active events with smooth camera tracking."
-                                               Style="{StaticResource FeatureText}"/>
-                                    <TextBlock Text="Remote switch control" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="Assign aliases to Smart Switches and toggle them from Team Chat commands."
-                                               Style="{StaticResource FeatureText}"/>
-                                    <TextBlock Text="Connection stability" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="Clears stale device mappings on disconnect and reduces UI hangs while probing missing devices."
-                                               Style="{StaticResource FeatureText}"/>
-                                </StackPanel>
-                            </Expander>
-
-                            <Expander Style="{StaticResource OlderReleaseExpander}">
-                                <Expander.Header>
-                                    <TextBlock Text="v4.3.1 | Bugfixes and improvements" FontWeight="SemiBold"/>
-                                </Expander.Header>
-                                <StackPanel Margin="0,10,0,0">
-                                    <TextBlock Text="Fixed marker drift when zooming, improved mini-map centering, added patrol helicopter crash detection, and hardened event reset logic when switching servers."
-                                               Style="{StaticResource FeatureText}"/>
-                                </StackPanel>
-                            </Expander>
-
-                            <Expander Style="{StaticResource OlderReleaseExpander}">
-                                <Expander.Header>
-                                    <TextBlock Text="v4.2 | Cargo Ship overhaul" FontWeight="SemiBold"/>
-                                </Expander.Header>
-                                <StackPanel Margin="0,10,0,0">
-                                    <Image Source="pack://application:,,,/Assets/Screenshots/Cargo_notification_settings.png"
-                                           Stretch="Uniform"
-                                           MaxHeight="220"
-                                           Margin="0,0,0,8"/>
-                                    <TextBlock Text="Cargo route learning, live docking countdowns, granular cargo notifications, and synthetic Oil Rig crate triggers."
-                                               Style="{StaticResource FeatureText}"/>
-                                    <Border Background="#1A4A7A"
-                                            BorderBrush="#2A6AAA"
-                                            BorderThickness="1"
-                                            CornerRadius="6"
-                                            Padding="9"
-                                            Margin="0,2,0,0">
-                                        <TextBlock Text="Existing users should open Chat Alerts and reset their notification selection once with the master toggle."
-                                                   Foreground="#A9D9FF"
-                                                   TextWrapping="Wrap"/>
-                                    </Border>
-                                </StackPanel>
-                            </Expander>
-
-                            <Expander Style="{StaticResource OlderReleaseExpander}">
-                                <Expander.Header>
-                                    <TextBlock Text="v4.1.x | Notifications and custom crosshair" FontWeight="SemiBold"/>
-                                </Expander.Header>
-                                <StackPanel Margin="0,10,0,0">
-                                    <TextBlock Text="Added granular notification management, improved map rendering at high zoom, and introduced the custom crosshair editor with PNG uploads."
-                                               Style="{StaticResource FeatureText}"/>
-                                </StackPanel>
-                            </Expander>
-
-                            <Expander Style="{StaticResource OlderReleaseExpander}">
-                                <Expander.Header>
-                                    <TextBlock Text="v4.0.0 | Map and stability overhaul" FontWeight="SemiBold"/>
-                                </Expander.Header>
-                                <StackPanel Margin="0,10,0,0">
-                                    <TextBlock TextWrapping="Wrap" Margin="0,0,0,10">
-                                        <Span Foreground="{DynamicResource TextSubtle}">Thanks to </Span>
-                                        <Hyperlink NavigateUri="https://github.com/JawadYzbk"
-                                                   RequestNavigate="Hyperlink_RequestNavigate"
-                                                   Foreground="{DynamicResource Accent}">JawadYzbk</Hyperlink>
-                                        <Span Foreground="{DynamicResource TextSubtle}"> for the core architecture rebuild.</Span>
-                                    </TextBlock>
-                                    <TextBlock Text="Predictive marker smoothing, the Event Dock, shop clustering, modern shop search, advanced trades, suspicious shop detection, smoother map animation, and offline item icon caching."
-                                               Style="{StaticResource FeatureText}"/>
-                                </StackPanel>
-                            </Expander>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource ReleaseCard}">
-                        <StackPanel>
-                            <TextBlock Text="Core Features and Older Updates"
-                                       Style="{StaticResource ReleaseTitle}"/>
-                            <TextBlock Text="v3.5.4: player management, renamed trackers, optimized item icon downloads, and progress tracking."
-                                       Style="{StaticResource FeatureText}"/>
-                            <TextBlock Text="v3.5.3: activity intelligence, manual Rust+ protocol links, tray mode, and improved BattleMetrics lookup."
-                                       Style="{StaticResource FeatureText}"/>
-                            <TextBlock Text="v3.4.0: hierarchical device grouping and persistent Smart Alarm settings."
-                                       Style="{StaticResource FeatureText}"/>
-                            <TextBlock Text="v3.3.x and earlier: Oil Rig timers, leader command support, storage monitor integration, shop analytics, team management, camera monitoring, and death markers."
-                                       Style="{StaticResource FeatureText}"/>
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </DockPanel>
