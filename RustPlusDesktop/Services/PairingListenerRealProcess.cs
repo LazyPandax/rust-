@@ -648,7 +648,7 @@ namespace RustPlusDesk.Services
                 return "⚠️ Expo Push Token service is temporarily unavailable (HTTP 503). Wait a few minutes, then retry pairing.";
 
             if (l.Contains("phone_registration_error"))
-                return "⚠️ Google FCM registration failed temporarily. Retry pairing; if Chrome fails, use Login with Edge.";
+                return "⚠️ Google FCM registration failed temporarily. Retry pairing with the default login flow.";
 
             if ((l.Contains("getaddrinfo") || l.Contains("enotfound") || l.Contains("eai_again")) && l.Contains("mtalk.google.com"))
                 return "⚠️ Keine Verbindung zu mtalk.google.com (Port 5228). Firewall/Proxy/DNS prüfen.";

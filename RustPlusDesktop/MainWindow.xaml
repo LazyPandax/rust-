@@ -4560,17 +4560,17 @@
                         </ui:Button>
 
                         <ui:Button
-                            x:Name="BtnOverlayPairEdge"
+                            x:Name="BtnOverlayPairDefault"
                             Height="42"
                             Margin="0,10,0,0"
                             HorizontalAlignment="Stretch"
                             Appearance="Secondary"
-                            Click="BtnListenWithEdge_Click"
+                            Click="BtnListenPairing_Click"
                             FontSize="14"
                             FontWeight="SemiBold"
                             Icon="{ui:SymbolIcon Symbol=Globe24}">
                             <ui:Button.Content>
-                                <TextBlock Margin="8,0,0,0" Text="Login with Edge" />
+                                <TextBlock Margin="8,0,0,0" Text="Login with Default Browser" />
                             </ui:Button.Content>
                         </ui:Button>
 
