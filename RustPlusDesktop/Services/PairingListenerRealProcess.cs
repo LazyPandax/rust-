@@ -431,9 +431,6 @@ namespace RustPlusDesk.Services
                     using var doc = JsonDocument.Parse(json);
                     var root = doc.RootElement;
 
-                    static string? J(JsonElement el, string name)
-                        => el.TryGetProperty(name, out var v) ? v.GetString() : null;
-
                     var type = GetJsonString(root, "type");   // "alarm" | "entity" | "server" | evtl. "chat"
                     if (string.Equals(type, "chat", StringComparison.OrdinalIgnoreCase))
                     {

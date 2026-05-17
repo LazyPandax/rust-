@@ -4,12 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "audit": "npm audit --omit=dev",
+    "test": "node -e \"require('@liamcottle/rustplus.js'); console.log('rustplus-cli dependencies load')\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@liamcottle/rustplus.js": "^2.5.0"
+    "@liamcottle/rustplus.js": "file:vendor/rustplus.js"
+  },
+  "overrides": {
+    "axios": "^1.16.1",
+    "body-parser": "^1.20.4",
+    "express": "^4.22.1",
+    "path-to-regexp": "^0.1.13",
+    "protobufjs": "^7.5.8",
+    "qs": "^6.14.1",
+    "ws": "^8.20.1"
   }
 }

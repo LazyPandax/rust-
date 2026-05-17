@@ -5,14 +5,14 @@ from pathlib import Path
 from functools import wraps
 
 # --- CONFIG ---
-DATA_DIR = Path("/var/lib/rustplus-overlays")   # Speicherort (muss existieren, chmod 750)
+DATA_DIR = Path(os.environ.get("RUSTPLUS_DESK_OVERLAY_DATA_DIR", "/var/lib/rustplus-overlays"))   # Data directory (must exist, chmod 750)
 _secret_hex = os.environ.get("RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX", "").strip()
 if not _secret_hex:
     raise RuntimeError("Set RUSTPLUS_DESK_OVERLAY_SYNC_SECRET_HEX before starting overlay sync.")
 SHARED_SECRET = bytes.fromhex(_secret_hex)
 MAX_UPLOAD_BYTES = 350 * 1024   # 350 KB
 MAX_UPLOADS_PER_MIN = 5         # 5 Uploads / Minute pro SteamID
-CLEANUP_DAYS = 35               # Dateien älter als X Tage werden gelöscht
+CLEANUP_DAYS = 35               # Files older than this many days are deleted
 # ----------------
 
 app = Flask(__name__)

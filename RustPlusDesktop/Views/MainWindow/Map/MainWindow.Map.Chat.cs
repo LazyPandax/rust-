@@ -12,7 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using RustPlusDesk.Models;
 using RustPlusDesk.Services;
-using ui = Wpf.Ui.Controls;
+using UiControls = Wpf.Ui.Controls;
 
 namespace RustPlusDesk.Views;
 
@@ -263,13 +263,13 @@ public partial class MainWindow
     {
         if (_rust is not RustPlusClientReal real)
         {
-            ShowInfoSnackbar("Connection", "You are not connected to any server.", ui.ControlAppearance.Caution);
+            ShowInfoSnackbar("Connection", "You are not connected to any server.", UiControls.ControlAppearance.Caution);
             return;
         }
 
         if (!(_vm.Selected?.IsConnected ?? false))
         {
-            ShowInfoSnackbar("Chat", "Please connect to a server first.", ui.ControlAppearance.Info);
+            ShowInfoSnackbar("Chat", "Please connect to a server first.", UiControls.ControlAppearance.Info);
             return;
         }
 
@@ -287,13 +287,13 @@ public partial class MainWindow
         }
         catch (InvalidOperationException)
         {
-            ShowInfoSnackbar("Chat", "Please connect to a server first.", ui.ControlAppearance.Info);
+            ShowInfoSnackbar("Chat", "Please connect to a server first.", UiControls.ControlAppearance.Info);
             return;
         }
         catch (Exception ex)
         {
             AppendLog("PrimeChat failed: " + ex.Message);
-            ShowInfoSnackbar("Chat", "Chat is not available right now.", ui.ControlAppearance.Danger);
+            ShowInfoSnackbar("Chat", "Chat is not available right now.", UiControls.ControlAppearance.Danger);
             return;
         }
 

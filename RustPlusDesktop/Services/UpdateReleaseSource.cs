@@ -33,7 +33,7 @@ internal sealed record UpdateReleaseSource(string Owner, string Name)
             : new UpdateReleaseSource(DefaultOwner, DefaultName);
     }
 
-    private static bool TryParse(string? value, out UpdateReleaseSource source)
+    internal static bool TryParse(string? value, out UpdateReleaseSource source)
     {
         source = new UpdateReleaseSource(DefaultOwner, DefaultName);
         if (string.IsNullOrWhiteSpace(value)) return false;

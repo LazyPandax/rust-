@@ -12,7 +12,7 @@ using Microsoft.Web.WebView2.Wpf;
 using RustPlusDesk.Helpers;
 using RustPlusDesk.Models;
 using RustPlusDesk.Services;
-using ui = Wpf.Ui.Controls;
+using UiControls = Wpf.Ui.Controls;
 
 namespace RustPlusDesk.Views;
 
@@ -571,7 +571,7 @@ public partial class MainWindow
         Grid.SetRow(nameLabel, 1);
         grid.Children.Add(nameLabel);
 
-        var nameInput = new ui.TextBox { PlaceholderText = "Enter group name..." };
+        var nameInput = new UiControls.TextBox { PlaceholderText = "Enter group name..." };
         Grid.SetRow(nameInput, 2);
         grid.Children.Add(nameInput);
         
@@ -599,11 +599,11 @@ public partial class MainWindow
 
         foreach(var g in existingGroups)
         {
-            var gBtn = new ui.Button { 
+            var gBtn = new UiControls.Button {
                 Content = g, 
                 Margin = new Thickness(0,0,4,4), 
                 Padding = new Thickness(8,4,8,4),
-                Appearance = ui.ControlAppearance.Secondary
+                Appearance = UiControls.ControlAppearance.Secondary
             };
             gBtn.Click += (s, e) => {
                 nameInput.Text = g;
@@ -631,8 +631,8 @@ public partial class MainWindow
         grid.Children.Add(scroll);
 
         var btnPanel = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-        var okBtn = new ui.Button { Content = "Save Group", Width = 120, Margin = new Thickness(0, 0, 12, 0), Appearance = ui.ControlAppearance.Primary };
-        var cancelBtn = new ui.Button { Content = "Cancel", Width = 90 };
+        var okBtn = new UiControls.Button { Content = "Save Group", Width = 120, Margin = new Thickness(0, 0, 12, 0), Appearance = UiControls.ControlAppearance.Primary };
+        var cancelBtn = new UiControls.Button { Content = "Cancel", Width = 90 };
 
         bool saved = false;
         okBtn.Click += (s, e) => { 
@@ -701,7 +701,7 @@ public partial class MainWindow
         stack.Children.Add(new TextBlock { Text = $"Group Settings: {player.Name}", FontSize = 20, FontWeight = FontWeights.Bold, Margin = new Thickness(0,0,0,16) });
         
         stack.Children.Add(new TextBlock { Text = "Group Name", Foreground = (Brush)FindResource("TextSubtle") });
-        var input = new ui.TextBox { 
+        var input = new UiControls.TextBox {
             Text = player.GroupName, 
             PlaceholderText = "Enter group name..."
         };
@@ -715,10 +715,10 @@ public partial class MainWindow
         
         (string, string)? result = null;
 
-        var saveBtn = new ui.Button { Content = "Save Changes", Appearance = ui.ControlAppearance.Primary, Width = 130, Margin = new Thickness(0,0,12,0) };
+        var saveBtn = new UiControls.Button { Content = "Save Changes", Appearance = UiControls.ControlAppearance.Primary, Width = 130, Margin = new Thickness(0,0,12,0) };
         saveBtn.Click += (s, e) => { result = (input.Text.Trim(), colorSelector.Getter()); win.DialogResult = true; };
 
-        var cancelBtn = new ui.Button { Content = "Cancel", Width = 90 };
+        var cancelBtn = new UiControls.Button { Content = "Cancel", Width = 90 };
         cancelBtn.Click += (s, e) => { win.DialogResult = false; };
 
         btnPanel.Children.Add(saveBtn);

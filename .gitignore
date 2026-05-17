@@ -1,6 +1,8 @@
 # --- Visual Studio / .NET ---
 **/bin/
 **/obj/
+**/TestResults/
+RustPlusDesktop/runtime/rustplus-cli/vendor/**/node_modules/
 **/.vs/
 **/*.user
 **/*.suo

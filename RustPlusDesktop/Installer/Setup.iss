@@ -28,7 +28,7 @@ OutputDir=..\bin\Installer
 OutputBaseFilename=RustPlusDesk-Setup
 Compression=lzma2/max
 SolidCompression=yes
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 
 ; Deine Optik

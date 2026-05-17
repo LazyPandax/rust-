@@ -5,16 +5,42 @@ VisualStudioVersion = 17.14.36511.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RustPlusDesk", "RustPlusDesktop\RustPlusDesk.csproj", "{234BCF77-B330-4D6E-9245-0A6743F17261}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RustPlusDesk.Tests", "RustPlusDesk.Tests\RustPlusDesk.Tests.csproj", "{672C137D-D02F-4070-AD49-D81E740347EF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{234BCF77-B330-4D6E-9245-0A6743F17261}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{234BCF77-B330-4D6E-9245-0A6743F17261}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Debug|x64.Build.0 = Debug|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Debug|x86.Build.0 = Debug|Any CPU
 		{234BCF77-B330-4D6E-9245-0A6743F17261}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{234BCF77-B330-4D6E-9245-0A6743F17261}.Release|Any CPU.Build.0 = Release|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Release|x64.ActiveCfg = Release|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Release|x64.Build.0 = Release|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Release|x86.ActiveCfg = Release|Any CPU
+		{234BCF77-B330-4D6E-9245-0A6743F17261}.Release|x86.Build.0 = Release|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Debug|x64.Build.0 = Debug|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Debug|x86.Build.0 = Debug|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Release|x64.ActiveCfg = Release|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Release|x64.Build.0 = Release|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Release|x86.ActiveCfg = Release|Any CPU
+		{672C137D-D02F-4070-AD49-D81E740347EF}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

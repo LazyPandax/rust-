@@ -49,13 +49,13 @@ using IOPath = System.IO.Path;
 using RustPlusDesk.Helpers;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
-using ui = Wpf.Ui.Controls;
+using UiControls = Wpf.Ui.Controls;
 
 
 namespace RustPlusDesk.Views;
 
 
-public partial class MainWindow : ui.FluentWindow
+public partial class MainWindow : UiControls.FluentWindow
 {
 
     private readonly MainViewModel _vm = new();
@@ -1013,7 +1013,7 @@ public partial class MainWindow : ui.FluentWindow
             // Kontextmenü sauber schließen (optional)
             BtnCrosshair.ContextMenu?.IsOpen.Equals(false);
         }
-        catch (Exception ex)
+        catch
         { }
     }
 
@@ -4500,16 +4500,16 @@ private sealed record MarkerRef(System.Windows.Shapes.Ellipse Dot, double U_DIP,
         }
     }
     
-    private void ShowInfoSnackbar(string title, string message, ui.ControlAppearance appearance = ui.ControlAppearance.Secondary)
+    private void ShowInfoSnackbar(string title, string message, UiControls.ControlAppearance appearance = UiControls.ControlAppearance.Secondary)
     {
         if (RootSnackbar == null) return;
         
-        var snackbar = new ui.Snackbar(RootSnackbar)
+        var snackbar = new UiControls.Snackbar(RootSnackbar)
         {
             Title = title,
             Content = message,
             Appearance = appearance,
-            Icon = new ui.SymbolIcon(ui.SymbolRegular.Info24),
+            Icon = new UiControls.SymbolIcon(UiControls.SymbolRegular.Info24),
             Timeout = TimeSpan.FromSeconds(3.5)
         };
         snackbar.Show();
