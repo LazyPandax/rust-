@@ -1,47 +1,42 @@
-# --- Visual Studio / .NET ---
+# Visual Studio / .NET
 **/bin/
 **/obj/
 **/TestResults/
-RustPlusDesktop/runtime/rustplus-cli/vendor/**/node_modules/
 **/.vs/
 **/*.user
 **/*.suo
+RustPlusDesktop/*_wpftmp.csproj
+
+# Local toolchains and downloaded installers
+/.dotnet/
+/.tools/
+
+# Publish output
+**/publish/
+RustPlusDesktop/bin/Installer/
+
+# NuGet / package manager output
+*.nupkg
+*.snupkg
+**/packages/
+
+# Node dependency installs
+RustPlusDesktop/runtime/rustplus-cli/node_modules/
+RustPlusDesktop/runtime/rustplus-cli/vendor/**/node_modules/
+
+# Generated editor/design backups
+**/Corel Auto-Preserve/
+
+# Logs and temporary files
 *.cache
 *.log
-
-# Publish-Output (dotnet publish)
-**/publish/
-
-# NuGet / Paketmanager
-*.nupkg
-**/packages/
-*.snupkg
-
-# Build-Artefakte / Temp
 *.tmp
 *.tmp.*
 *.pid
 *.DS_Store
 Thumbs.db
 
-# Inno Setup: .iss im Repo behalten? (optional)
-# Wenn du das Skript NICHT versionieren willst, einkommentieren:
-# *.iss
-
-# Binärdateien nicht versionieren
+# Binary build artifacts
 *.exe
 *.msi
 *.dll
-
-# Installer-Output: Ordner behalten, Inhalte ignorieren
-installer/Output/*
-!installer/Output/.gitkeep
-
-# Doku/Assets (rein informativ – wäre auch ohne diese Zeilen ok)
-!README.md
-!LICENSE
-!docs/
-!RustPlusDesktop/*.png
-!RustPlusDesktop/*.jpg
-RustPlusDesktop/RustPlusDesk_lbvqmzga_wpftmp.csproj
-RustPlusDesktop/Setup.iss
