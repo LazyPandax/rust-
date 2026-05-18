@@ -1,93 +1,69 @@
-# RustPlus Desktop - Refactoring & Architecture Plan
+# RustPlus Desktop Refactor Plan
 
-This document outlines the strategy for reorganizing the RustPlus Desktop project to improve maintainability, scalability, and code clarity.
+This plan keeps the app working while reducing the amount of logic tied directly
+to `MainWindow`.
 
-## 1. Current State Assessment
+## Current State
 
-### 🏗 Architecture
-- **Paradigm**: Hybrid MVVM. While a `MainViewModel` exists, significant logic remains in `MainWindow.xaml.cs` and its partial classes.
-- **Monolith**: `MainWindow.xaml.cs` is over 5,000 lines long. Even with partial class splitting, it remains tightly coupled to the UI.
-- **Componentization**: Logical sections (Devices, Map, Camera) are separated into files but still belong to the `MainWindow` class, making them hard to test or reuse.
+- The active app is `RustPlusDesktop/RustPlusDesk.csproj`.
+- The solution has a small xUnit test project in `RustPlusDesk.Tests`.
+- Core folders already exist: `Models`, `Services`, `ViewModels`, `Views`,
+  `Converters`, `Assets`, `Scripts`, and `Installer`.
+- `MainWindow.xaml`, `MainWindow.xaml.cs`, and several partial classes still
+  contain most of the UI behavior.
+- The Rust+ CLI runtime is vendored under `RustPlusDesktop/runtime/rustplus-cli`
+  and shipped as `runtime/rustplus-cli.zip`.
 
-### 📂 Organization
-- **Root Directory**: Overcrowded with mixed concerns (Models, Services, Windows, Scripts, and Assets).
-- **Inconsistency**: Some converters are in a folder, others are nested in classes. Some models are in `Models/`, others in the root.
+## Completed Cleanup
 
----
+- Window XAML/code-behind files live under `Views/Windows`.
+- Main window feature partials live under `Views/MainWindow`.
+- Runtime services such as Rust+ communication, pairing, storage, tracking, and
+  release lookup live under `Services`.
+- The project file uses asset globs instead of a hand-maintained list of every
+  icon and screenshot.
+- Generated folders such as `node_modules` and design-tool backup folders are
+  ignored instead of treated as source.
+- `scripts/package-rustplus-cli.ps1` rebuilds the shipped CLI runtime archive,
+  and CI now refreshes the archive before publishing the Windows app.
 
-## 2. Refactoring Progress
+## Next Refactor Phases
 
-### ✅ Completed
-- **MainWindow Partial Splitting**: Logic for `Overlay`, `Devices`, `Connection`, `Team`, `Map`, and `Camera` has been moved to `Views/MainWindow/`.
-- **Initial Folder Structure**: `Models/`, `Views/`, `Services/`, and `Converters/` folders exist.
-- **Service Extraction**: Core logic for FCM listening (`PairingListenerRealProcess`) and Rust+ communication (`RustPlusClientReal`) is in dedicated classes.
+### Phase 1: MainWindow Boundaries
 
-### ⏳ Still Needs Refactoring
-- **MVVM Implementation**: Move logic from `MainWindow.xaml.cs` event handlers into `MainViewModel` commands.
-- **UserControls**: Convert `MainWindow` logical sections from partial classes into actual `UserControl` components (e.g., `DevicesTabControl`).
-- **Dependency Injection**: Use a service provider to manage service lifetimes instead of manual instantiation in the View.
+1. Extract map state and operations into a `MapViewModel`.
+2. Extract device list/toggle logic into a `DevicesViewModel`.
+3. Extract team chat/member logic into a `TeamViewModel`.
+4. Leave existing partial classes as thin event bridges during the transition.
 
-### ✅ Completed
-- **Cleanup Root**: Moved all non-View files to their respective folders:
-  - Window files → `Views/Windows/` (12 windows)
-  - Image assets → `Assets/Images/` (20+ images)
-  - Python scripts → `Scripts/` (3 files)
-  - Installer config → `Installer/` (1 file)
-  - Updated `MainWindow.xaml` image path reference
-  - Fixed `.csproj` file
+### Phase 2: User Controls
 
----
+1. Create `Views/Controls/MapView.xaml`.
+2. Create `Views/Controls/DevicesView.xaml`.
+3. Create `Views/Controls/TeamView.xaml`.
+4. Move the corresponding XAML from `MainWindow.xaml` into those controls.
 
-## 3. Proposed Folder Structure
+### Phase 3: Dependency Injection
 
-A clean, industry-standard WPF structure:
+1. Add a small service container in `App.xaml.cs`.
+2. Register `IRustPlusClient`, `IPairingListener`, `StorageService`,
+   `TrackingService`, and release/update services.
+3. Pass services into view models through constructors.
+4. Prefer interfaces at UI boundaries so unit tests can cover behavior without
+   opening WPF windows.
 
-```text
-RustPlusDesktop/
-├── Assets/                 # Static resources
-│   ├── Icons/              # .ico and .png icons
-│   ├── Images/             # Backgrounds, UI images
-│   ├── Sounds/             # Alert sounds (.wav)
-│   └── Data/               # JSON files (item lists, etc.)
-├── Converters/             # XAML Value Converters
-├── Models/                 # Data entities (DTOs, Database models)
-├── Services/               # Logic, API Clients, External integrations
-│   ├── Interfaces/         # IService definitions
-│   └── Implementations/    # Concrete service classes
-├── ViewModels/             # Application state and Command logic
-│   ├── Base/               # ViewModelBase, RelayCommand
-│   └── Components/         # ViewModels for specific UserControls
-├── Views/                  # UI Components
-│   ├── Windows/            # Actual Window objects
-│   ├── Controls/           # Reusable UserControls (Devices, Map, etc.)
-│   └── Styles/             # XAML ResourceDictionaries (Themes, Brushes)
-├── Utils/                  # Static helpers, extensions, global constants
-└── Scripts/                # Python scripts and external tools
-```
+### Phase 4: Runtime Packaging
 
----
+1. Keep `runtime/rustplus-cli.zip` generated through
+   `scripts/package-rustplus-cli.ps1`.
+2. Download or cache the portable Node runtime in CI instead of tracking the
+   full `runtime/node-win-x64` directory.
+3. Keep only source, lock files, patches, and packaging scripts in Git.
 
-## 4. Step-by-Step Action Plan
+## Priority Order
 
-### Phase 1: Physical Reorganization
-1. **Move Models**: Relocate `SmartDevice.cs`, `ServerProfile.cs`, `TeamChatMessage.cs`, etc., to `/Models`.
-2. **Move Services**: Relocate `SteamLoginService.cs`, `StorageService.cs`, `TrackingService.cs`, etc., to `/Services`.
-3. **Move Assets**: Create `/Assets` and move all images, icons, and sounds there. Update XAML URIs accordingly.
-4. **Move ViewModels**: Move `ViewModel.cs` to `/ViewModels/MainViewModel.cs`.
-
-### Phase 2: Decoupling MainWindow
-1. **Create UserControls**: Create `DevicesView.xaml`, `MapView.xaml`, etc., in `/Views/Controls`.
-2. **Transfer Logic**: Move the logic from `MainWindow.Devices.cs` into the code-behind or ViewModel of the new `DevicesView`.
-3. **Simplify MainWindow**: `MainWindow.xaml` should eventually just be a shell containing these controls.
-
-### Phase 3: Pure MVVM & DI
-1. **RelayCommand**: Implement a standard `RelayCommand` to handle UI clicks in the ViewModel.
-2. **Service Provider**: Initialize services in `App.xaml.cs` and pass them to ViewModels via constructor injection.
-3. **Event Aggregator**: Use a pub/sub pattern for communication between components (e.g., "Server Changed" event) instead of direct method calls.
-
----
-
-## 5. Priorities for Next Session
-1. **Extract Map Logic**: The Map logic is the most complex; turning it into a standalone `UserControl` will significantly clean up `MainWindow`.
-2. **Extract Devices Logic**: Create a `DevicesView` UserControl from the partial class logic.
-3. **Extract Team Logic**: Create a `TeamView` UserControl from the partial class logic.
+1. Map extraction, because it is the largest UI area and has the most behavior.
+2. Device extraction, because it touches live server actions and needs tests.
+3. Portable Node cleanup, because it will reduce repo size sharply.
+4. Warning cleanup, because the baseline build works but still reports dead
+   fields, unreachable code, and obsolete API usage.
