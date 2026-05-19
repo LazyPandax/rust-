@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
+using System.Text.Json;
 
 namespace RustPlusDesk.Helpers
 {
@@ -101,6 +103,11 @@ namespace RustPlusDesk.Helpers
                     ZipFile.ExtractToDirectory(zip, target);
                     File.WriteAllText(stamp, sig);
                 }
+
+                // The shipped zip can contain vendored packages (runtime/rustplus-cli/vendor/*)
+                // without preserving NTFS junctions inside node_modules (reparse points are not
+                // reliably round-trippable through zip). Ensure Node can resolve these packages.
+                RepairVendoredNodeModules(target);
                 return target;
             }
 
@@ -109,7 +116,12 @@ namespace RustPlusDesk.Helpers
                 try
                 {
                     var dev = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "runtime", "rustplus-cli"));
-                    if (Directory.Exists(dev)) return dev;
+                    if (Directory.Exists(dev))
+                    {
+                        // Dev tree may also be missing junctions if copied around; best-effort repair.
+                        RepairVendoredNodeModules(dev);
+                        return dev;
+                    }
                 }
                 catch { }
             }
@@ -181,6 +193,128 @@ namespace RustPlusDesk.Helpers
                     result.Add(normalized);
             }
             catch { }
+        }
+
+        private static void RepairVendoredNodeModules(string cliRoot)
+        {
+            try
+            {
+                var vendorRoot = Path.Combine(cliRoot, "vendor");
+                var nodeModulesRoot = Path.Combine(cliRoot, "node_modules");
+                if (!Directory.Exists(vendorRoot) || !Directory.Exists(nodeModulesRoot)) return;
+
+                var nodeModulesFull = Path.GetFullPath(nodeModulesRoot);
+                if (!nodeModulesFull.EndsWith(Path.DirectorySeparatorChar))
+                    nodeModulesFull += Path.DirectorySeparatorChar;
+
+                foreach (var vendorPackageDir in Directory.GetDirectories(vendorRoot))
+                {
+                    var packageJson = Path.Combine(vendorPackageDir, "package.json");
+                    if (!File.Exists(packageJson)) continue;
+
+                    var name = TryReadPackageName(packageJson);
+                    if (string.IsNullOrWhiteSpace(name)) continue;
+
+                    // Scoped packages live under node_modules/@scope/name.
+                    var relative = name!.Replace('/', Path.DirectorySeparatorChar);
+                    var desiredPath = Path.GetFullPath(Path.Combine(nodeModulesRoot, relative));
+                    if (!desiredPath.StartsWith(nodeModulesFull, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    // If the module is already present (real dir or junction), we're done.
+                    if (File.Exists(Path.Combine(desiredPath, "package.json"))) continue;
+
+                    SafeDeleteDirectory(desiredPath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(desiredPath)!);
+
+                    if (!TryCreateJunction(desiredPath, vendorPackageDir))
+                    {
+                        // Fallback for systems where junction creation is blocked: copy the directory.
+                        CopyDirectory(vendorPackageDir, desiredPath);
+                    }
+                }
+            }
+            catch
+            {
+                // best-effort; pairing should keep working even if this fails
+            }
+        }
+
+        private static string? TryReadPackageName(string packageJsonPath)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(File.ReadAllText(packageJsonPath));
+                if (doc.RootElement.TryGetProperty("name", out var nameEl) && nameEl.ValueKind == JsonValueKind.String)
+                    return nameEl.GetString();
+            }
+            catch { }
+            return null;
+        }
+
+        private static bool TryCreateJunction(string junctionPath, string targetPath)
+        {
+            try
+            {
+                if (!Directory.Exists(targetPath)) return false;
+
+                // mklink requires the link path to not exist.
+                SafeDeleteDirectory(junctionPath);
+
+                var psi = new ProcessStartInfo("cmd.exe",
+                    $"/c mklink /J \"{junctionPath}\" \"{targetPath}\"")
+                {
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+
+                using var p = Process.Start(psi);
+                if (p == null) return false;
+
+                p.WaitForExit(5000);
+                return p.ExitCode == 0 && Directory.Exists(junctionPath);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static void SafeDeleteDirectory(string path)
+        {
+            if (!Directory.Exists(path)) return;
+
+            try
+            {
+                var attrs = File.GetAttributes(path);
+                if ((attrs & FileAttributes.ReparsePoint) != 0)
+                {
+                    // Remove the link itself; do not recurse into the target.
+                    Directory.Delete(path);
+                    return;
+                }
+            }
+            catch { }
+
+            try { Directory.Delete(path, recursive: true); } catch { }
+        }
+
+        private static void CopyDirectory(string sourceDir, string destinationDir)
+        {
+            Directory.CreateDirectory(destinationDir);
+
+            foreach (var file in Directory.GetFiles(sourceDir))
+            {
+                var dest = Path.Combine(destinationDir, Path.GetFileName(file));
+                File.Copy(file, dest, overwrite: true);
+            }
+
+            foreach (var dir in Directory.GetDirectories(sourceDir))
+            {
+                var dest = Path.Combine(destinationDir, Path.GetFileName(dir));
+                CopyDirectory(dir, dest);
+            }
         }
     }
 }

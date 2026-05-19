@@ -13,5 +13,6 @@ Local changes:
 - `package.json` pins security-sensitive transitive packages through npm
   overrides.
 
-Keep `package-lock.json`, `node_modules`, and `runtime/rustplus-cli.zip` in sync
-after changing this folder because the desktop app ships the zipped CLI runtime.
+Keep `package-lock.json` and `runtime/rustplus-cli.zip` in sync after changing
+this folder because the desktop app ships the zipped CLI runtime. Do not commit
+`node_modules`; regenerate it with `npm ci --omit=dev`.

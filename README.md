@@ -15,3 +15,33 @@ This fork is maintained by Panda at [LazyPandax/rust-](https://github.com/LazyPa
 [Open releases page](https://github.com/LazyPandax/rust-/releases/latest)
 
 > This project is not affiliated with Facepunch Studios or Rust.
+
+## Project Layout
+
+- `RustPlusDesktop/` - WPF desktop application.
+- `RustPlusDesk.Tests/` - xUnit tests for security and update helpers.
+- `RustPlusDesktop/runtime/rustplus-cli/` - patched Rust+ CLI source and lockfile.
+- `RustPlusDesktop/runtime/rustplus-cli.zip` - shipped CLI runtime archive.
+- `docs/` - architecture notes, security notes, and project audit.
+
+## Development
+
+Use the .NET SDK version pinned in `global.json`:
+
+```powershell
+dotnet restore RustPlusDesk.sln
+dotnet test RustPlusDesk.sln --configuration Release
+```
+
+For the Rust+ CLI runtime:
+
+```powershell
+cd RustPlusDesktop\runtime\rustplus-cli
+npm ci --omit=dev
+npm test
+npm audit --omit=dev
+cd ..\..\..
+.\scripts\package-rustplus-cli.ps1 -SkipInstall -SkipTest -SkipAudit
+```
+
+See `docs/project-audit.md` for the current cleanup recommendations.
