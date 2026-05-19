@@ -116,9 +116,8 @@ namespace RustPlusDesk.Helpers
                 try
                 {
                     var dev = Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "runtime", "rustplus-cli"));
-                    if (Directory.Exists(dev))
+                    if (IsValidCliRoot(dev))
                     {
-                        // Dev tree may also be missing junctions if copied around; best-effort repair.
                         RepairVendoredNodeModules(dev);
                         return dev;
                     }
@@ -126,7 +125,13 @@ namespace RustPlusDesk.Helpers
                 catch { }
             }
 
-            throw new FileNotFoundException("rustplus-cli not found. Reinstall RustPlusDesk so runtime\\rustplus-cli.zip is present.");
+            if (IsValidCliRoot(target))
+            {
+                RepairVendoredNodeModules(target);
+                return target;
+            }
+
+            throw new FileNotFoundException("rustplus-cli not found. Reinstall RustPlusDesk so runtime\\rustplus-cli.zip is present, or delete the cached runtime under %LOCALAPPDATA%\\RustPlusDesk\\runtime and start the app again.");
         }
 
         public static string? ResolveCliEntry(out string workingDir)
@@ -138,7 +143,8 @@ namespace RustPlusDesk.Helpers
                 Path.Combine(root, "cli.js"),
                 Path.Combine(root, "rustplus.js"),
                 Path.Combine(root, "index.js"),
-                Path.Combine(root, "node_modules", "@liamcottle", "rustplus.js", "cli", "index.js")
+                Path.Combine(root, "node_modules", "@liamcottle", "rustplus.js", "cli", "index.js"),
+                Path.Combine(root, "vendor", "rustplus.js", "cli", "index.js")
             })
             {
                 if (File.Exists(c)) return c;
@@ -180,6 +186,21 @@ namespace RustPlusDesk.Helpers
             foreach (var part in parts)
                 path = Path.Combine(path, part);
             return path;
+        }
+
+        private static bool IsValidCliRoot(string root)
+        {
+            try
+            {
+                return Directory.Exists(root)
+                    && Directory.Exists(Path.Combine(root, "node_modules"))
+                    && (File.Exists(Path.Combine(root, "node_modules", "@liamcottle", "rustplus.js", "cli", "index.js"))
+                        || File.Exists(Path.Combine(root, "vendor", "rustplus.js", "cli", "index.js")));
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static void AddNormalized(string? path, List<string> result, HashSet<string> seen)
