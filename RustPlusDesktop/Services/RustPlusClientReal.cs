@@ -4772,67 +4772,135 @@ rp.connect();
         lock (_subscribed) _subscribed.Clear();
         _eventsHooked = false;
 
-        async Task<(bool ok, string? err)> TryAsync(bool useProxy)
+        static bool IsNotFoundError(string? msg)
         {
-            _api = new RustPlus(profile.Host, profile.Port, steamId, playerToken, useProxy);
+            if (string.IsNullOrWhiteSpace(msg)) return false;
+            msg = msg.Trim();
+            return msg.Equals("not_found", StringComparison.OrdinalIgnoreCase) ||
+                   msg.Contains("not_found", StringComparison.OrdinalIgnoreCase);
+        }
 
-            // optionales ConnectAsync aufrufen, falls vorhanden
+        static bool IsTimeoutError(string? msg)
+        {
+            if (string.IsNullOrWhiteSpace(msg)) return false;
+            msg = msg.Trim();
+            return msg.Equals("timeout", StringComparison.OrdinalIgnoreCase) ||
+                   msg.Contains("timeout", StringComparison.OrdinalIgnoreCase) ||
+                   msg.Contains("timed out", StringComparison.OrdinalIgnoreCase);
+        }
+
+        static string NormalizeError(string? msg)
+            => string.IsNullOrWhiteSpace(msg) ? "unbekannter Fehler" : msg.Trim();
+
+        string BuildConnectFailureMessage(string? err1, string? err2, bool firstWasProxy)
+        {
+            var directErr = firstWasProxy ? err2 : err1;
+            var proxyErr = firstWasProxy ? err1 : err2;
+
+            var sb = new StringBuilder();
+            sb.AppendLine("Rust+ nicht erreichbar (direkt & Proxy).");
+            sb.AppendLine($"Direkt: {NormalizeError(directErr)}");
+            sb.AppendLine($"Proxy:  {NormalizeError(proxyErr)}");
+
+            if (IsNotFoundError(directErr) || IsNotFoundError(proxyErr))
+            {
+                sb.AppendLine();
+                sb.AppendLine("Hinweis: \"not_found\" bedeutet fast immer, dass dein Pairing/PlayerToken ungültig oder abgelaufen ist.");
+                sb.AppendLine("Bitte im Spiel (ESC → Rust+ → Pair / Re-Pair) erneut koppeln und dann hier erneut verbinden.");
+            }
+            else if (IsTimeoutError(directErr) || IsTimeoutError(proxyErr))
+            {
+                sb.AppendLine();
+                sb.AppendLine("Hinweis: \"Timeout\" deutet auf ein Verbindungs-/Firewall-/Routing-Problem hin.");
+                sb.AppendLine("Prüfe, ob der Rust+ Companion-Port (app.port) erreichbar ist oder ob der Facepunch-Proxy geblockt wird.");
+            }
+
+            return sb.ToString().TrimEnd();
+        }
+
+        async Task<(bool ok, string? err, RustPlus? api)> TryAsync(bool useProxy)
+        {
+            RustPlus? api = null;
             try
             {
-                var mConnect = _api.GetType().GetMethod("ConnectAsync", new[] { typeof(CancellationToken) })
-                             ?? _api.GetType().GetMethod("ConnectAsync", Type.EmptyTypes);
-                if (mConnect != null)
-                {
-                    var res = mConnect.GetParameters().Length == 1
-                        ? mConnect.Invoke(_api, new object[] { ct })
-                        : mConnect.Invoke(_api, Array.Empty<object>());
-                    if (res is Task t) await t;
-                }
-            }
-            catch (Exception ex) { _log("ConnectAsync-Call schlug fehl: " + ex.Message); }
+                api = new RustPlus(profile.Host, profile.Port, steamId, playerToken, useProxy);
 
-            // “Kontakt” prüfen
-            try
+                // optionales ConnectAsync aufrufen, falls vorhanden
+                try
+                {
+                    var mConnect = api.GetType().GetMethod("ConnectAsync", new[] { typeof(CancellationToken) })
+                                 ?? api.GetType().GetMethod("ConnectAsync", Type.EmptyTypes);
+                    if (mConnect != null)
+                    {
+                        using var ctsConnect = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                        ctsConnect.CancelAfter(TimeSpan.FromSeconds(6));
+
+                        var res = mConnect.GetParameters().Length == 1
+                            ? mConnect.Invoke(api, new object[] { ctsConnect.Token })
+                            : mConnect.Invoke(api, Array.Empty<object>());
+                        if (res is Task t)
+                            await t.WaitAsync(ctsConnect.Token).ConfigureAwait(false);
+                    }
+                }
+                catch (OperationCanceledException) { return (false, "Timeout", api); }
+                catch (Exception ex) { _log("ConnectAsync-Call schlug fehl: " + ex.Message); }
+
+                // “Kontakt” prüfen
+                try
+                {
+                    using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                    cts.CancelAfter(TimeSpan.FromSeconds(6));
+
+                    var info = await api.GetInfoAsync().WaitAsync(cts.Token).ConfigureAwait(false);
+                    if (info?.IsSuccess == true)
+                    {
+                        _log($"Authentifiziert – {(useProxy ? "über Facepunch-Proxy" : "direkt")}.");
+                        return (true, null, api);
+                    }
+                    return (false, info?.Error?.Message ?? "keine Antwort / Fehler", api);
+                }
+                catch (OperationCanceledException) { return (false, "Timeout", api); }
+                catch (Exception ex) { return (false, ex.Message, api); }
+            }
+            finally
             {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                cts.CancelAfter(TimeSpan.FromSeconds(6));
-
-                var infoTask = _api.GetInfoAsync();
-                var done = await Task.WhenAny(infoTask, Task.Delay(7000, cts.Token));
-                if (done != infoTask) return (false, "Timeout");
-
-                var info = infoTask.Result;
-                if (info?.IsSuccess == true)
-                {
-                    _log($"Authentifiziert – {(useProxy ? "über Facepunch-Proxy" : "direkt")}.");
-                    return (true, null);
-                }
-                return (false, info?.Error?.Message ?? "keine Antwort / Fehler");
+                // On failure, caller disposes. On success, caller assigns to _api and disposes on DisconnectAsync().
             }
-            catch (Exception ex) { return (false, ex.Message); }
         }
 
         var first = profile.UseFacepunchProxy;
 
-        var (ok1, err1) = await TryAsync(first);
+        var (ok1, err1, api1) = await TryAsync(first);
         if (ok1)
         {
+            _api = api1;
             _useProxyCurrent = first;
             HookEventsIfNeeded();     // <— HIER
             return;
         }
+        try { if (api1 is IDisposable d1) d1.Dispose(); } catch { }
 
-        var (ok2, err2) = await TryAsync(!first);
+        // Wenn Direkt-Verbindung "not_found" liefert, ist das i.d.R. ein ungültiges/abgelaufenes Pairing.
+        // Ein Proxy-Fallback hilft dann nicht und verlängert nur die Wartezeit (Timeout).
+        if (!first && IsNotFoundError(err1))
+        {
+            _log($"GetInfo (Pfad1: Direkt): {err1}");
+            throw new InvalidOperationException(BuildConnectFailureMessage(err1, "übersprungen", first));
+        }
+
+        var (ok2, err2, api2) = await TryAsync(!first);
         if (ok2)
         {
+            _api = api2;
             _useProxyCurrent = !first;
             HookEventsIfNeeded();     // <— UND HIER
             return;
         }
+        try { if (api2 is IDisposable d2) d2.Dispose(); } catch { }
 
         _log($"GetInfo (Pfad1: {(first ? "Proxy" : "Direkt")}): {err1}");
         _log($"GetInfo (Pfad2: {(!first ? "Proxy" : "Direkt")}): {err2}");
-        throw new InvalidOperationException("Rust+ nicht erreichbar (direkt & Proxy).");
+        throw new InvalidOperationException(BuildConnectFailureMessage(err1, err2, first));
     }
 
     public async Task DisconnectAsync()
