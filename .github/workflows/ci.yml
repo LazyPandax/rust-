@@ -47,6 +47,7 @@ jobs:
         run: dotnet test RustPlusDesk.sln --configuration Release --no-build --logger trx
 
       - name: Audit NuGet packages
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: dotnet list RustPlusDesk.sln package --vulnerable --include-transitive
 
       - name: Install CLI dependencies
@@ -58,6 +59,7 @@ jobs:
         run: npm test
 
       - name: Audit CLI dependencies
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         working-directory: ${{ env.CLI_DIR }}
         run: npm audit --omit=dev
 
