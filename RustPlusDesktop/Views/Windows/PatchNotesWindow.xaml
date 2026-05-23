@@ -71,7 +71,7 @@
                         Padding="10,6"
                         VerticalAlignment="Top">
                     <TextBlock x:Name="TxtCurrentVersion"
-                               Text="Current: v5.0.9"
+                               Text="Current: v5.0.10"
                                Foreground="#A9D9FF"
                                FontWeight="SemiBold"
                                FontSize="12"/>
@@ -82,24 +82,24 @@
                 <StackPanel>
                     <Border Style="{StaticResource ReleaseCard}">
                         <StackPanel>
-                            <TextBlock Text="v5.0.9 | Patch notes cleanup"
+                            <TextBlock Text="v5.0.10 | Connection fallback update"
                                        Style="{StaticResource ReleaseTitle}"/>
 
                             <UniformGrid Columns="2" Margin="0,0,0,4">
                                 <StackPanel Margin="0,0,14,0">
-                                    <TextBlock Text="Current update only" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="The patch notes window now shows the latest update without the old release history blocks."
+                                    <TextBlock Text="Clearer connect errors" Style="{StaticResource FeatureTitle}"/>
+                                    <TextBlock Text="Connection failures now explain whether the issue is token/pairing or timeout/network so fixes are easier."
                                                Style="{StaticResource FeatureText}"/>
                                 </StackPanel>
 
                                 <StackPanel Margin="0,0,0,0">
-                                    <TextBlock Text="Cleaner window" Style="{StaticResource FeatureTitle}"/>
-                                    <TextBlock Text="Removed the earlier releases and older updates sections from the visible patch notes."
+                                    <TextBlock Text="Safer fallback behavior" Style="{StaticResource FeatureTitle}"/>
+                                    <TextBlock Text="When direct returns not_found, the app skips pointless proxy retries and shows re-pair guidance."
                                                Style="{StaticResource FeatureText}"/>
                                 </StackPanel>
                             </UniformGrid>
 
-                            <TextBlock Text="Older details stay out of the app window so the screen stays focused and short."
+                            <TextBlock Text="This release improves Rust+ reconnect reliability and troubleshooting clarity."
                                        Foreground="{DynamicResource TextSubtle}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>

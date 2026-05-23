@@ -105,8 +105,30 @@ jobs:
           path: ${{ env.INSTALLER_PATH }}
           if-no-files-found: error
 
-      - name: Upload installer to tag release
+      - name: Publish installer on tag release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${env:GITHUB_REF_NAME}" "${env:INSTALLER_PATH}" --clobber
+        run: |
+          $tag = "${env:GITHUB_REF_NAME}"
+          $asset = "${env:INSTALLER_PATH}"
+          $repo = "${env:GITHUB_REPOSITORY}"
+
+          gh release view $tag --repo $repo *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $asset --repo $repo --clobber
+            exit 0
+          }
+
+          $notes = @"
+          ## Connection fallback update
+
+          - Improved Rust+ connection diagnostics for not_found vs timeout failures.
+          - Added clearer in-app guidance for re-pair and connectivity issues.
+          - Includes latest installer build from this tag.
+          "@
+
+          $notesPath = Join-Path $env:RUNNER_TEMP "release-notes.md"
+          Set-Content -LiteralPath $notesPath -Value $notes -Encoding UTF8
+
+          gh release create $tag $asset --repo $repo --title "RustPlusDesk $tag" --notes-file $notesPath
