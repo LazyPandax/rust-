@@ -99,7 +99,7 @@ jobs:
           & $signtool.FullName sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f $pfx /p "$env:WINDOWS_CERTIFICATE_PASSWORD" "$env:INSTALLER_PATH"
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: RustPlusDesk-Setup
           path: ${{ env.INSTALLER_PATH }}
